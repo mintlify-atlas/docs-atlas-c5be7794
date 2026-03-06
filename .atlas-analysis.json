@@ -1,0 +1,75 @@
+{
+  "projectType": "data-platform",
+  "projectName": "Historia Para Gandules",
+  "projectDescription": "Interactive geospatial visualization platform mapping historical Instagram content from the Canary Islands",
+  "theme": "maple",
+  "primaryColor": "#D84315",
+  "lightColor": "#FF8A65",
+  "darkColor": "#BF360C",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "quickstart",
+          "installation"
+        ]
+      },
+      {
+        "group": "Data Collection",
+        "pages": [
+          "data/scraping",
+          "data/sources",
+          "data/schema"
+        ]
+      },
+      {
+        "group": "Analysis & Visualization",
+        "pages": [
+          "analysis/eda",
+          "analysis/statistics",
+          "analysis/categories"
+        ]
+      },
+      {
+        "group": "Interactive Maps",
+        "pages": [
+          "maps/overview",
+          "maps/generation",
+          "maps/customization"
+        ]
+      },
+      {
+        "group": "Data Processing",
+        "pages": [
+          "processing/pipeline",
+          "processing/geolocation",
+          "processing/enrichment"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/api",
+          "reference/configuration",
+          "reference/troubleshooting"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Instagram content scraping using Instaloader",
+    "Geospatial data visualization with Folium",
+    "Statistical analysis and exploratory data analysis",
+    "Interactive map generation with location markers",
+    "Historical content categorization and analysis",
+    "Excel data export and management"
+  ],
+  "publicApiSurface": [
+    "scraping5.py - Instagram scraper functions",
+    "mapita5.py - Map generation functions",
+    "EDA.ipynb - Data analysis notebooks",
+    "index.html - Interactive map output"
+  ]
+}
