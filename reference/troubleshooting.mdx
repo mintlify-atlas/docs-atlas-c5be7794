@@ -1,0 +1,410 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Historia Para Gandules
+---
+
+This page covers common issues you might encounter and their solutions.
+
+## Instagram Scraping Issues
+
+### Authentication Errors
+
+**Problem:** Cannot access Instagram data or receive authentication errors.
+
+**Symptoms:**
+```
+Login error: Challenge required
+HTTP Error 401: Unauthorized
+```
+
+**Solutions:**
+
+1. **Login with Instagram credentials:**
+   ```python
+   import instaloader
+   
+   L = instaloader.Instaloader()
+   L.login('your_username', 'your_password')
+   ```
+
+2. **Use session file:**
+   - Login once and save session
+   - Reuse session to avoid repeated logins
+   ```python
+   L.load_session_from_file('your_username')
+   ```
+
+3. **Check Instagram restrictions:**
+   - Instagram may limit API access
+   - Try again after a few hours
+   - Consider using a different account
+
+<Warning>
+  Instagram frequently updates their security measures. If you encounter persistent authentication issues, check the [Instaloader documentation](https://instaloader.github.io/) for the latest solutions.
+</Warning>
+
+---
+
+### Rate Limiting
+
+**Problem:** Scraping stops or slows down significantly.
+
+**Symptoms:**
+```
+Rate limit exceeded
+Too many requests
+429 Error
+```
+
+**Solutions:**
+
+1. **Add delays between requests:**
+   ```python
+   import time
+   
+   for post in profile.get_posts():
+       if post.is_video:
+           # Process post
+           time.sleep(2)  # Wait 2 seconds between posts
+   ```
+
+2. **Reduce request frequency:**
+   - Scrape in smaller batches
+   - Run during off-peak hours
+   - Spread scraping across multiple sessions
+
+3. **Use Instaloader's built-in rate limiting:**
+   ```python
+   L = instaloader.Instaloader(
+       sleep=True,  # Sleep between requests
+       quiet=False,  # Show progress
+       user_agent='Mozilla/5.0',
+       max_connection_attempts=3
+   )
+   ```
+
+---
+
+### Missing Video Data
+
+**Problem:** Some posts don't have video URLs or duration.
+
+**Symptoms:**
+- `url_video` shows "Sin URL"
+- `duracion_video` shows "No disponible"
+
+**Solutions:**
+
+1. **Verify post type:**
+   ```python
+   if post.is_video and post.video_url:
+       url_video = post.video_url
+   else:
+       url_video = "Sin URL"
+   ```
+
+2. **Handle private or expired content:**
+   - Some videos may be deleted or made private
+   - Add error handling:
+   ```python
+   try:
+       url_video = post.video_url
+   except Exception as e:
+       print(f"Error getting video URL: {e}")
+       url_video = "Sin URL"
+   ```
+
+---
+
+## Map Generation Issues
+
+### Coordinate Parsing Errors
+
+**Problem:** Locations not appearing on the map.
+
+**Symptoms:**
+```
+Error al procesar la ubicación: invalid literal for float()
+```
+
+**Solutions:**
+
+1. **Check coordinate format:**
+   - Must be: `"latitude,longitude"`
+   - Example: `"28.1234,-15.5678"`
+   - No spaces, comma-separated
+
+2. **Validate data before processing:**
+   ```python
+   def obtener_coordenadas(localizacion):
+       try:
+           if pd.isna(localizacion):
+               return None, None
+           lat, lon = map(float, str(localizacion).split(','))
+           return lat, lon
+       except Exception as e:
+           print(f"Error: {localizacion} - {e}")
+           return None, None
+   ```
+
+3. **Clean Excel data:**
+   - Remove extra spaces
+   - Check for invalid characters
+   - Ensure numeric values
+
+---
+
+### Image Download Failures
+
+**Problem:** Thumbnail images not displaying in map popups.
+
+**Symptoms:**
+```
+No se pudo descargar la imagen
+HTTP Error 404
+```
+
+**Solutions:**
+
+1. **Check image URLs:**
+   - Verify URLs are valid and accessible
+   - Instagram CDN links may expire
+
+2. **Add retry logic:**
+   ```python
+   import time
+   
+   def descargar_imagen(url, index, max_retries=3):
+       for attempt in range(max_retries):
+           try:
+               response = requests.get(url, stream=True, timeout=10)
+               if response.status_code == 200:
+                   ruta_imagen = f"imagenes/imagen_{index}.jpg"
+                   with open(ruta_imagen, 'wb') as file:
+                       for chunk in response.iter_content(1024):
+                           file.write(chunk)
+                   return ruta_imagen
+           except Exception as e:
+               print(f"Attempt {attempt + 1} failed: {e}")
+               time.sleep(2)
+       return None
+   ```
+
+3. **Use fallback images:**
+   - Provide a default placeholder image
+   - Skip markers without images
+
+---
+
+### Map Not Loading
+
+**Problem:** HTML file opens but map doesn't display.
+
+**Symptoms:**
+- Blank page
+- JavaScript console errors
+
+**Solutions:**
+
+1. **Check file paths:**
+   - Ensure `imagenes/` folder is in the same directory as HTML
+   - Use relative paths for images
+
+2. **Verify Folium installation:**
+   ```bash
+   pip install --upgrade folium
+   ```
+
+3. **Test with simple map:**
+   ```python
+   import folium
+   
+   m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+   m.save("test_map.html")
+   ```
+
+---
+
+## Dependency Issues
+
+### Missing Package Errors
+
+**Problem:** Import errors when running scripts.
+
+**Symptoms:**
+```
+ModuleNotFoundError: No module named 'instaloader'
+ImportError: cannot import name 'xxx'
+```
+
+**Solutions:**
+
+1. **Install all requirements:**
+   ```bash
+   pip install instaloader pandas folium requests matplotlib seaborn plotly openpyxl
+   ```
+
+2. **Use virtual environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. **Check Python version:**
+   ```bash
+   python --version  # Should be 3.8 or higher
+   ```
+
+---
+
+### Excel File Reading Errors
+
+**Problem:** Cannot read `.xlsx` files.
+
+**Symptoms:**
+```
+ImportError: Missing optional dependency 'openpyxl'
+```
+
+**Solutions:**
+
+1. **Install openpyxl:**
+   ```bash
+   pip install openpyxl
+   ```
+
+2. **Alternative - convert to CSV:**
+   ```python
+   # Read CSV instead
+   df = pd.read_csv('data.csv')
+   ```
+
+---
+
+## Data Analysis Issues
+
+### Jupyter Notebook Not Starting
+
+**Problem:** Cannot open `.ipynb` files.
+
+**Solutions:**
+
+1. **Install Jupyter:**
+   ```bash
+   pip install jupyter notebook
+   jupyter notebook
+   ```
+
+2. **Use JupyterLab:**
+   ```bash
+   pip install jupyterlab
+   jupyter lab
+   ```
+
+3. **Use VS Code:**
+   - Install Python extension
+   - Open `.ipynb` files directly
+
+---
+
+### Plotting Errors
+
+**Problem:** Visualizations not displaying.
+
+**Solutions:**
+
+1. **Enable inline plotting:**
+   ```python
+   %matplotlib inline
+   ```
+
+2. **Update plotting libraries:**
+   ```bash
+   pip install --upgrade matplotlib seaborn plotly
+   ```
+
+3. **Check backend:**
+   ```python
+   import matplotlib
+   matplotlib.use('Agg')  # For non-interactive backend
+   ```
+
+---
+
+## Performance Issues
+
+### Slow Scraping
+
+**Problem:** Scraping takes too long.
+
+**Solutions:**
+
+1. **Limit post count:**
+   ```python
+   from itertools import islice
+   
+   posts = islice(profile.get_posts(), 100)  # Only first 100 posts
+   ```
+
+2. **Skip non-video posts early:**
+   ```python
+   for post in profile.get_posts():
+       if not post.is_video:
+           continue
+       # Process only videos
+   ```
+
+3. **Use multiprocessing:**
+   - Process multiple posts in parallel (advanced)
+   - Be careful with rate limits
+
+---
+
+### Large File Sizes
+
+**Problem:** HTML map or CSV files are too large.
+
+**Solutions:**
+
+1. **Compress images:**
+   ```python
+   from PIL import Image
+   
+   img = Image.open(ruta_imagen)
+   img.save(ruta_imagen, quality=70, optimize=True)
+   ```
+
+2. **Limit data:**
+   - Filter by date range
+   - Select top N posts
+   - Remove unnecessary columns
+
+3. **Use external image hosting:**
+   - Link to Instagram URLs directly
+   - Don't download thumbnails locally
+
+---
+
+## Getting Help
+
+If you encounter issues not covered here:
+
+1. **Check documentation:**
+   - [Instaloader Docs](https://instaloader.github.io/)
+   - [Folium Documentation](https://python-visualization.github.io/folium/)
+   - [Pandas Documentation](https://pandas.pydata.org/docs/)
+
+2. **Search existing issues:**
+   - GitHub Issues for each library
+   - Stack Overflow
+
+3. **Enable debug logging:**
+   ```python
+   import logging
+   logging.basicConfig(level=logging.DEBUG)
+   ```
+
+<Note>
+  For project-specific issues, review the source code in `scraping5.py` and `mapita5.py` to understand the exact implementation.
+</Note>

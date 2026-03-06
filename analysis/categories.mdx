@@ -1,0 +1,400 @@
+---
+title: 'Content Categories Analysis'
+description: 'Detailed analysis of the 5 main content categories and their performance patterns'
+---
+
+## Overview
+
+Historia Para Gandules content is organized into **5 main categories**, each focusing on different aspects of Canarian history and culture. This analysis examines the performance characteristics and audience engagement patterns for each category.
+
+## The 5 Content Categories
+
+<CardGroup cols={2}>
+  <Card title="Toponimia de Lugares" icon="map-location-dot">
+    Place names and geographic origins
+  </Card>
+  
+  <Card title="Curiosidades Históricas" icon="lightbulb">
+    Historical curiosities and interesting facts
+  </Card>
+  
+  <Card title="Biografías de Personajes Históricos" icon="user">
+    Biographies of historical figures
+  </Card>
+  
+  <Card title="Arquitectura" icon="building">
+    Architectural heritage and buildings
+  </Card>
+  
+  <Card title="Acontecimientos Históricos" icon="calendar">
+    Historical events and milestones
+  </Card>
+</CardGroup>
+
+## Category Distribution
+
+### Video Count by Category
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load data
+df = pd.read_excel('excel26deenero.xlsx')
+
+# Count videos per category
+category_counts = df['Categoria'].value_counts()
+print(category_counts)
+
+# Visualize distribution
+fig, ax = plt.subplots(figsize=(12, 6))
+category_counts.plot(kind='bar', ax=ax, color='skyblue', edgecolor='black')
+ax.set_title('Distribución de Videos por Categoría', fontsize=16)
+ax.set_xlabel('Categoría', fontsize=12)
+ax.set_ylabel('Número de Videos', fontsize=12)
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+```
+
+## Category Performance Analysis
+
+### Aggregated Metrics by Category
+
+```python
+# Aggregate engagement metrics by category
+data = df.groupby('Categoria').agg({
+    'Likes': 'sum',
+    'Comentarios': 'sum',
+    'Visualizaciones': 'sum'
+}).reset_index()
+
+print("Total Engagement by Category:")
+print(data)
+```
+
+### Visualization: Stacked Bar Chart
+
+```python
+import numpy as np
+
+# Create figure
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Stacked bar chart
+sns.set_style("whitegrid")
+sns.set_palette("husl")
+
+bottom = np.zeros(len(data))
+for column in ['Likes', 'Comentarios', 'Visualizaciones']:
+    ax.bar(data['Categoria'], data[column], bottom=bottom, label=column)
+    bottom += data[column]
+
+ax.set_title('Engagement por Categoría', fontsize=16)
+ax.set_xlabel('Categoría', fontsize=12)
+ax.set_ylabel('Cantidad', fontsize=12)
+ax.legend(title='Tipo de Engagement', title_fontsize='11', fontsize='10')
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+# Add total labels on top of bars
+for i, categoria in enumerate(data['Categoria']):
+    total = sum(data.loc[i, ['Likes', 'Comentarios', 'Visualizaciones']])
+    ax.text(i, total, f'{total:,}', ha='center', va='bottom')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Category 1: Toponimia de Lugares
+
+<Info>
+**Focus**: Origins and meanings of place names in the Canary Islands
+</Info>
+
+### Example Topics
+- "Descubre el origen de Llanos de la Pez en Gran Canaria"
+- "Descubre el origen de La Cicer en Las Palmas"
+- "Descubre el origen de las Islas Afortunadas"
+- "Descubre el origen de Tamaraceite en las Islas Canarias"
+
+### Performance Metrics
+
+```python
+# Filter for Toponimia category
+toponimia_df = df[df['Categoria'] == 'Toponimia de Lugares']
+
+print(f"Total Videos: {len(toponimia_df)}")
+print(f"Average Likes: {toponimia_df['Likes'].mean():.2f}")
+print(f"Average Comments: {toponimia_df['Comentarios'].mean():.2f}")
+print(f"Average Views: {toponimia_df['Visualizaciones'].mean():.2f}")
+print(f"Total Likes: {toponimia_df['Likes'].sum():,}")
+```
+
+**Characteristics**:
+- **Highest video count** among categories (33 videos)
+- Strong engagement with local audiences curious about place name origins
+- Includes the **top-performing video** with 14,659 likes and 255,191 views
+
+<Tip>
+Toponimia content resonates strongly with Canarian identity, making it ideal for viral content opportunities.
+</Tip>
+
+## Category 2: Curiosidades Históricas
+
+<Info>
+**Focus**: Fascinating historical facts and lesser-known stories
+</Info>
+
+### Example Topics
+- "El día que rechazaron a los Beatles en Tenerife"
+- "Los misteriosos submarinos de la Segunda Guerra Mundial en Canarias"
+- "El día que una leona se escapó en Las Palmas"
+- "El misterioso Drago Canario: símbolo de historia y naturaleza"
+
+### Performance Metrics
+
+```python
+# Filter for Curiosidades category
+curiosidades_df = df[df['Categoria'] == 'Curiosidades Históricas']
+
+print(f"Total Videos: {len(curiosidades_df)}")
+print(f"Average Likes: {curiosidades_df['Likes'].mean():.2f}")
+print(f"Average Comments: {curiosidades_df['Comentarios'].mean():.2f}")
+print(f"Average Views: {curiosidades_df['Visualizaciones'].mean():.2f}")
+```
+
+**Characteristics**:
+- **High comment rate** relative to likes
+- Unusual stories generate curiosity and discussion
+- Good balance between education and entertainment
+
+## Category 3: Biografías de Personajes Históricos
+
+<Info>
+**Focus**: Lives and contributions of historical figures from the Canary Islands
+</Info>
+
+### Example Topics
+- "El legado de Gregorio Chil: el hombre detrás del paseo"
+- "El genio de la escultura en Canarias: Luján Pérez"
+- "Doramas: El valiente guerrero que marcó la historia canaria"
+- "La visita de Agatha Christie a Las Palmas en 1927"
+
+### Performance Metrics
+
+```python
+# Filter for Biografías category
+biografias_df = df[df['Categoria'] == 'Biografías de Personajes Históricos']
+
+print(f"Total Videos: {len(biografias_df)}")
+print(f"Average Likes: {biografias_df['Likes'].mean():.2f}")
+print(f"Average Comments: {biografias_df['Comentarios'].mean():.2f}")
+print(f"Total Videos: {len(biografias_df)}")
+```
+
+**Characteristics**:
+- Educational focus on individual historical figures
+- Steady engagement across multiple personalities
+- Mix of local heroes and international figures with Canarian connections
+
+## Category 4: Arquitectura
+
+<Info>
+**Focus**: Historical buildings, architectural heritage, and urban landmarks
+</Info>
+
+### Example Topics
+- "Descubre la historia de la Casa de Colón en Vegueta"
+- "El renacimiento del Teatro Pérez Galdós: una historia trágica"
+- "Descubre las fascinantes farolas fernandinas de Vegueta y Triana"
+- "Descubre la belleza de los balcones canarios históricos"
+
+### Performance Metrics
+
+```python
+# Filter for Arquitectura category
+arquitectura_df = df[df['Categoria'] == 'Arquitectura']
+
+print(f"Total Videos: {len(arquitectura_df)}")
+print(f"Average Likes: {arquitectura_df['Likes'].mean():.2f}")
+print(f"Average Comments: {arquitectura_df['Comentarios'].mean():.2f}")
+print(f"Average Views: {arquitectura_df['Visualizaciones'].mean():.2f}")
+```
+
+**Characteristics**:
+- Visual appeal enhances engagement
+- Strong performance with heritage and preservation themes
+- Appeals to architecture enthusiasts and history buffs alike
+
+<Note>
+Architecture content benefits from visual storytelling, combining historical context with building aesthetics.
+</Note>
+
+## Category 5: Acontecimientos Históricos
+
+<Info>
+**Focus**: Significant historical events and their impact on the Canary Islands
+</Info>
+
+### Example Topics
+- "La construcción del Puerto de la Luz impulsó la economía" (337,001 views!)
+- "El tren que cruzó la avenida marítima hace 50 años"
+- "La invasión holandesa que marcó la historia de Las Palmas"
+- "El devastador brote de cólera en Gran Canaria, 1851"
+
+### Performance Metrics
+
+```python
+# Filter for Acontecimientos category
+acontecimientos_df = df[df['Categoria'] == 'Acontecimientos Históricos']
+
+print(f"Total Videos: {len(acontecimientos_df)}")
+print(f"Average Likes: {acontecimientos_df['Likes'].mean():.2f}")
+print(f"Average Comments: {acontecimientos_df['Comentarios'].mean():.2f}")
+print(f"Average Views: {acontecimientos_df['Visualizaciones'].mean():.2f}")
+print(f"Highest Views: {acontecimientos_df['Visualizaciones'].max():,}")
+```
+
+**Characteristics**:
+- Contains the **highest-viewed video** (337,001 views)
+- Major events generate strong engagement
+- Historical milestones create educational value
+
+<Warning>
+**High Variance**: This category shows the highest performance variability, with some events generating exceptional engagement while others maintain baseline levels.
+</Warning>
+
+## Comparative Analysis
+
+### Comments per Category
+
+```python
+# Create bar chart for comments
+fig, ax = plt.subplots(figsize=(12, 6))
+
+sns.barplot(x='Categoria', y='Comentarios', data=data, ax=ax)
+ax.set_title('Comentarios por Categoría', fontsize=16)
+ax.set_xlabel('Categoría', fontsize=12)
+ax.set_ylabel('Número de Comentarios', fontsize=12)
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+# Add value labels
+for i, v in enumerate(data['Comentarios']):
+    ax.text(i, v, str(v), ha='center', va='bottom')
+
+plt.tight_layout()
+plt.show()
+```
+
+### Average Engagement by Category
+
+```python
+# Calculate average metrics per video by category
+avg_by_category = df.groupby('Categoria').agg({
+    'Likes': 'mean',
+    'Comentarios': 'mean',
+    'Visualizaciones': 'mean'
+}).round(2)
+
+print("Average Engagement per Video:")
+print(avg_by_category)
+```
+
+## Interactive Category Explorer
+
+### Scatter Plot by Category
+
+```python
+import plotly.express as px
+
+# Create interactive scatter plot
+fig = px.scatter(
+    df, 
+    x='Likes', 
+    y='Comentarios', 
+    size='Visualizaciones',
+    color='Categoria',
+    hover_data=['Titulo'],
+    title='Relación entre Likes y Comentarios por Categoría',
+    labels={'Likes': 'Likes', 'Comentarios': 'Comentarios'}
+)
+
+fig.show()
+```
+
+### Category Insights
+
+<AccordionGroup>
+  <Accordion title="Toponimia de Lugares (33 videos)">
+    - **Strongest performer** overall
+    - Highest total engagement across all metrics
+    - Contains viral video with 14,659 likes
+    - Appeals to local identity and cultural pride
+  </Accordion>
+  
+  <Accordion title="Curiosidades Históricas (12 videos)">
+    - **High engagement rate** per video
+    - Unusual stories drive curiosity
+    - Strong comment-to-like ratio
+    - Good for viral potential with quirky topics
+  </Accordion>
+  
+  <Accordion title="Biografías (23 videos)">
+    - **Steady, reliable performance**
+    - Educational focus attracts engaged audience
+    - Mix of famous and lesser-known figures
+    - Builds knowledge about Canarian history
+  </Accordion>
+  
+  <Accordion title="Arquitectura (22 videos)">
+    - **Visual storytelling strength**
+    - Heritage preservation resonates
+    - Architectural beauty enhances engagement
+    - Appeals to both locals and architecture enthusiasts
+  </Accordion>
+  
+  <Accordion title="Acontecimientos Históricos (31 videos)">
+    - **Highest variance in performance**
+    - Major events generate exceptional engagement
+    - Contains highest-viewed video (337,001 views)
+    - Milestone anniversaries drive interest
+  </Accordion>
+</AccordionGroup>
+
+## Content Strategy Recommendations
+
+<Steps>
+  <Step title="Prioritize Toponimia">
+    Focus on place name origins as they consistently generate high engagement and viral potential
+  </Step>
+  
+  <Step title="Leverage Historical Events">
+    Target major anniversaries and milestone events for exceptional view counts
+  </Step>
+  
+  <Step title="Balance Portfolio">
+    Maintain diverse content across all 5 categories to reach different audience segments
+  </Step>
+  
+  <Step title="Amplify Curiosities">
+    Unusual historical facts drive discussion - great for community engagement
+  </Step>
+</Steps>
+
+## Key Takeaways
+
+- **Toponimia de Lugares** leads in total engagement and viral potential
+- **Acontecimientos Históricos** achieves highest individual video views
+- All categories show viability with engaged audiences
+- Content diversity strengthens overall channel performance
+- Local identity and cultural pride drive strongest engagement
+
+## Next Steps
+
+- [EDA Overview](/analysis/eda) - Return to exploratory data analysis
+- [Statistical Analysis](/analysis/statistics) - Examine correlations and distributions
+
+## Data Source
+
+Analysis based on 121 videos from Historia Para Gandules, documented in `EDA.ipynb` notebook with complete code and visualizations.

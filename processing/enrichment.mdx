@@ -1,0 +1,387 @@
+---
+title: 'Data Enrichment with LLMs'
+description: 'AI-powered categorization and title generation for historical content'
+---
+
+## Overview
+
+The Historia Para Gandules project uses **OpenAI's GPT-3.5-turbo** to enrich scraped Instagram data with:
+
+1. **Content Categorization** - Classifying posts into historical themes
+2. **Title Generation** - Creating engaging social media titles
+
+This automated enrichment transforms raw captions into structured, analyzable data.
+
+## Text Preprocessing
+
+Before sending text to the LLM, the data undergoes cleaning to improve quality:
+
+### Emoji Removal
+
+Emojis are removed using a comprehensive regex pattern:
+
+```python
+import re
+
+def eliminar_emojis(texto):
+    """Remove emojis from text using Unicode ranges"""
+    emoji_pattern = re.compile("["
+                          u"\U0001F600-\U0001F64F"  # Emoticons
+                          u"\U0001F300-\U0001F5FF"  # Symbols & pictographs
+                          u"\U0001F680-\U0001F6FF"  # Transport & map symbols
+                          u"\U0001F700-\U0001F77F"  # Alchemical symbols
+                          u"\U0001F780-\U0001F7FF"  # Geometric shapes
+                          u"\U0001F800-\U0001F8FF"  # Supplemental arrows
+                          u"\U0001F900-\U0001F9FF"  # Supplemental symbols
+                          u"\U0001FA00-\U0001FA6F"  # Chess symbols
+                          u"\U0001FA70-\U0001FAFF"  # Symbols and pictographs
+                          u"\U00002702-\U000027B0"  # Dingbats
+                          u"\U000024C2-\U0001F251"
+                          "]+", flags=re.UNICODE)
+    return emoji_pattern.sub(r'', texto)
+```
+
+### Hashtag Extraction
+
+Hashtags are extracted and appended to the cleaned text:
+
+```python
+def extraer_hashtags(texto):
+    """Extract hashtags from text"""
+    texto_sin_emojis = eliminar_emojis(texto)
+    lista_hashtags = re.findall(r'#(\w+)', texto_sin_emojis)
+    return str(lista_hashtags)
+
+# Apply to dataframe
+df['Texto limpio'] = df['Texto del reel'].apply(eliminar_emojis)
+df['Hashtags'] = df['Texto limpio'].apply(extraer_hashtags)
+
+# Combine cleaned text with hashtags
+df['Texto limpio'] = df['Texto limpio'] + 'Hashtags:' + df['Hashtags']
+```
+
+<Info>
+**Why append hashtags?** Including extracted hashtags in the cleaned text provides additional context for LLM categorization while maintaining emoji-free input.
+</Info>
+
+## Content Categorization
+
+Each post is classified into one of five historical categories:
+
+### Categories
+
+1. **Acontecimientos Históricos** - Historical events (battles, invasions, celebrations)
+2. **Toponimia de Lugares** - Place names and their origins
+3. **Biografías de Personajes Históricos** - Historical figures and biographies
+4. **Arquitectura** - Buildings, monuments, and architectural heritage
+5. **Curiosidades Históricas** - Historical curiosities and interesting facts
+
+### Classification Function
+
+```python
+from openai import OpenAI
+
+client = OpenAI(api_key="your-api-key")
+
+def clasificartexto(texto):
+    """Classify text into historical categories"""
+    respuesta = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"Indicame la temática (Acontecimientos Históricos, "
+                          f"Toponimia de Lugares, Biografías de Personajes Históricos, "
+                          f"Arquitectura, Curiosidades Históricas) del siguiente texto "
+                          f"solo puede ser 1 categoría: {texto}"
+            }
+        ],
+        model="gpt-3.5-turbo",
+        max_tokens=60,
+        temperature=0.5,
+        stop=["\n"],
+    )
+    categoria = respuesta.choices[0].message.content
+    return categoria
+
+# Apply to dataset
+df['Categoria'] = df['Texto limpio'].apply(clasificartexto)
+```
+
+### Model Parameters
+
+| Parameter | Value | Purpose |
+|-----------|-------|----------|
+| `model` | `gpt-3.5-turbo` | Fast, cost-effective model for classification |
+| `max_tokens` | 60 | Sufficient for category name |
+| `temperature` | 0.5 | Balanced consistency and variation |
+| `stop` | `["\n"]` | Stop at newline to ensure single category |
+
+<Warning>
+**Single Category Constraint**: The prompt explicitly requests "solo puede ser 1 categoría" to ensure each post receives exactly one classification.
+</Warning>
+
+## Title Generation
+
+Engaging titles are generated for social media optimization:
+
+### Title Generation Function
+
+```python
+def crear_titulo_redes_sociales(texto):
+    """Create engaging social media title"""
+    respuesta = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"Crea un título llamativo para este texto que sea adecuado "
+                          f"para redes sociales, usando un máximo de 10 palabras y que "
+                          f"no incluya hashtags: {texto}"
+            }
+        ],
+        model="gpt-3.5-turbo",
+        max_tokens=30,
+        temperature=0.5,
+        stop=["\n"],
+    )
+    titulo = respuesta.choices[0].message.content
+    return titulo
+
+# Apply to dataset
+df['Titulo'] = df['Texto limpio'].apply(crear_titulo_redes_sociales)
+```
+
+### Title Requirements
+
+- **Maximum Length**: 10 words
+- **Style**: Engaging and attention-grabbing ("llamativo")
+- **Format**: No hashtags or special characters
+- **Purpose**: Optimized for social media feeds
+
+### Example Titles
+
+| Original Caption (excerpt) | Generated Title |
+|----------------------------|----------------|
+| "Llanos de la Pez es uno de los lugares más frecuentados..." | Descubre el origen de Llanos de la Pez en Gran Canaria |
+| "El municipio de los Realejos no siempre estuvo unido..." | La división histórica de Los Realejos: Alto vs Bajo |
+| "Hace algunas décadas rechazaron en un local de Tenerife..." | El día que rechazaron a los Beatles en Tenerife |
+
+## Complete Enrichment Pipeline
+
+Here's the complete code to enrich the dataset:
+
+```python
+import pandas as pd
+import re
+from openai import OpenAI
+
+# Initialize OpenAI client
+client = OpenAI(api_key="your-api-key")
+
+# Define preprocessing functions
+def eliminar_emojis(texto):
+    emoji_pattern = re.compile("["
+                          u"\U0001F600-\U0001F64F"
+                          u"\U0001F300-\U0001F5FF"
+                          u"\U0001F680-\U0001F6FF"
+                          u"\U0001F700-\U0001F77F"
+                          u"\U0001F780-\U0001F7FF"
+                          u"\U0001F800-\U0001F8FF"
+                          u"\U0001F900-\U0001F9FF"
+                          u"\U0001FA00-\U0001FA6F"
+                          u"\U0001FA70-\U0001FAFF"
+                          u"\U00002702-\U000027B0"
+                          u"\U000024C2-\U0001F251"
+                          "]+", flags=re.UNICODE)
+    return emoji_pattern.sub(r'', texto)
+
+def extraer_hashtags(texto):
+    texto_sin_emojis = eliminar_emojis(texto)
+    lista_hashtags = re.findall(r'#(\w+)', texto_sin_emojis)
+    return str(lista_hashtags)
+
+def clasificartexto(texto):
+    respuesta = client.chat.completions.create(
+        messages=[{"role": "user", 
+                   "content": f"Indicame la temática (Acontecimientos Históricos, "
+                             f"Toponimia de Lugares, Biografías de Personajes Históricos, "
+                             f"Arquitectura, Curiosidades Históricas) del siguiente texto "
+                             f"solo puede ser 1 categoría: {texto}"}],
+        model="gpt-3.5-turbo",
+        max_tokens=60,
+        temperature=0.5,
+        stop=["\n"]
+    )
+    return respuesta.choices[0].message.content
+
+def crear_titulo_redes_sociales(texto):
+    respuesta = client.chat.completions.create(
+        messages=[{"role": "user",
+                   "content": f"Crea un título llamativo para este texto que sea adecuado "
+                             f"para redes sociales, usando un máximo de 10 palabras y que "
+                             f"no incluya hashtags: {texto}"}],
+        model="gpt-3.5-turbo",
+        max_tokens=30,
+        temperature=0.5,
+        stop=["\n"]
+    )
+    return respuesta.choices[0].message.content
+
+# Load data
+df = pd.read_excel('excel_info_1.xlsx')
+
+# Step 1: Clean text
+df['Texto limpio'] = df['Texto del reel'].apply(eliminar_emojis)
+df['Hashtags'] = df['Texto limpio'].apply(extraer_hashtags)
+df['Texto limpio'] = df['Texto limpio'] + 'Hashtags:' + df['Hashtags']
+
+# Step 2: Apply LLM enrichment
+print("Categorizing content...")
+df['Categoria'] = df['Texto limpio'].apply(clasificartexto)
+
+print("Generating titles...")
+df['Titulo'] = df['Texto limpio'].apply(crear_titulo_redes_sociales)
+
+# Step 3: Save enriched data
+df.to_excel('excel_enriched.xlsx', index=False)
+print("Enrichment complete!")
+```
+
+## Category Distribution
+
+After enrichment, the dataset contains:
+
+```python
+# Analyze category distribution
+category_counts = df['Categoria'].value_counts()
+print(category_counts)
+```
+
+Typical distribution:
+
+- **Toponimia de Lugares**: ~33 posts
+- **Acontecimientos Históricos**: ~31 posts
+- **Biografías de Personajes Históricos**: ~23 posts
+- **Arquitectura**: ~22 posts
+- **Curiosidades Históricas**: ~12 posts
+
+<Info>
+The distribution reflects the content focus of Historia Para Gandules, with emphasis on place names and historical events in the Canary Islands.
+</Info>
+
+## Performance & Cost
+
+### Processing Time
+
+- **Single Request**: ~1-2 seconds per classification/title
+- **Full Dataset (121 posts)**: ~4-6 minutes total
+- **Batch Processing**: Sequential (OpenAI API rate limits)
+
+### API Costs (Approximate)
+
+| Operation | Tokens per Request | Cost per 1K tokens | Cost per Post |
+|-----------|--------------------|--------------------|---------------|
+| Categorization | ~200-300 | $0.0015 | ~$0.0004 |
+| Title Generation | ~150-200 | $0.0015 | ~$0.0003 |
+| **Total per post** | ~400 | - | **~$0.0007** |
+
+<Warning>
+**Total Dataset Cost**: ~$0.08-$0.10 for enriching 121 posts. Consider caching results to avoid reprocessing.
+</Warning>
+
+## Quality Control
+
+### Validate Categories
+
+Ensure all posts received valid categories:
+
+```python
+# Define valid categories
+VALID_CATEGORIES = [
+    'Acontecimientos Históricos',
+    'Toponimia de Lugares',
+    'Biografías de Personajes Históricos',
+    'Arquitectura',
+    'Curiosidades Históricas'
+]
+
+# Check for invalid categories
+invalid = df[~df['Categoria'].isin(VALID_CATEGORIES)]
+if len(invalid) > 0:
+    print(f"Found {len(invalid)} posts with invalid categories:")
+    print(invalid[['Titulo', 'Categoria']])
+```
+
+### Review Sample Titles
+
+```python
+# Review sample of generated titles
+print(df[['Texto del reel', 'Titulo']].head(10))
+```
+
+## Optimization Tips
+
+### 1. Batch Similar Requests
+
+For faster processing, batch requests by category:
+
+```python
+# Process in batches of 10
+batch_size = 10
+for i in range(0, len(df), batch_size):
+    batch = df.iloc[i:i+batch_size]
+    batch['Categoria'] = batch['Texto limpio'].apply(clasificartexto)
+    # Add small delay to respect rate limits
+    time.sleep(1)
+```
+
+### 2. Cache Results
+
+Store results to avoid reprocessing:
+
+```python
+import json
+
+# Save category cache
+category_cache = df[['Texto limpio', 'Categoria']].to_dict('records')
+with open('category_cache.json', 'w') as f:
+    json.dump(category_cache, f)
+
+# Load cache for reuse
+with open('category_cache.json', 'r') as f:
+    cache = json.load(f)
+```
+
+### 3. Use Async Processing
+
+For large datasets, use async requests:
+
+```python
+import asyncio
+from openai import AsyncOpenAI
+
+client = AsyncOpenAI(api_key="your-api-key")
+
+async def classify_async(texto):
+    respuesta = await client.chat.completions.create(
+        messages=[{"role": "user", "content": f"...: {texto}"}],
+        model="gpt-3.5-turbo",
+        max_tokens=60,
+        temperature=0.5
+    )
+    return respuesta.choices[0].message.content
+
+# Process multiple texts concurrently
+tasks = [classify_async(text) for text in df['Texto limpio']]
+df['Categoria'] = await asyncio.gather(*tasks)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Data Pipeline" icon="diagram-project" href="/processing/pipeline">
+    Return to the full pipeline overview
+  </Card>
+  <Card title="Geolocation Data" icon="map-location-dot" href="/processing/geolocation">
+    Learn about geographic data processing
+  </Card>
+</CardGroup>

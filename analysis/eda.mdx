@@ -1,0 +1,153 @@
+---
+title: 'Exploratory Data Analysis'
+description: 'Comprehensive exploratory data analysis of Historia Para Gandules video content'
+---
+
+## Overview
+
+This guide documents the exploratory data analysis performed on the Historia Para Gandules video dataset, which includes **121 videos** analyzed across multiple engagement metrics and content categories.
+
+## Dataset Summary
+
+The analysis covers:
+- **Total Videos**: 121
+- **Metrics Analyzed**: Likes, Comments, Views, Video Duration
+- **Content Categories**: 5 main categories
+- **Time Period**: Historical content from Las Palmas de Gran Canaria and Canary Islands
+
+## Loading and Preparing Data
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+# Load the dataset
+df = pd.read_excel('excel26deenero.xlsx')
+
+# Display basic information
+print(df.info())
+print(df.head())
+```
+
+## Key Metrics
+
+### Descriptive Statistics
+
+The dataset shows the following distribution across 121 videos:
+
+| Metric | Mean | Std Dev | Min | 25% | Median | 75% | Max |
+|--------|------|---------|-----|-----|--------|-----|-----|
+| **Likes** | 1,316 | 1,930 | 304 | 640 | 828 | 1,250 | 14,659 |
+| **Comments** | 39 | 49 | 3 | 18 | 27 | 39 | 361 |
+| **Views** | 15,392 | 39,250 | 2,277 | 4,926 | 6,294 | 10,244 | 337,001 |
+| **Duration (s)** | 50.08 | 18.22 | 26 | 38.13 | 45.90 | 56.20 | 133.49 |
+
+### Top Performing Videos
+
+The top 5 videos by likes demonstrate exceptional engagement:
+
+```python
+# Get top 5 videos by likes
+top_5_likes = df[['Texto del reel', 'Likes', 'Comentarios', 'Visualizaciones']].sort_values(
+    by='Likes', ascending=False
+).head(5)
+
+print("Top 5 videos con más Likes:")
+print(top_5_likes)
+```
+
+**Top Performers**:
+1. **14,659 likes** - Canarian identity video (255,191 views, 361 comments)
+2. **14,514 likes** - Puerto de la Luz construction (337,001 views, 333 comments)
+3. **5,259 likes** - Las Canteras beach history (82,054 views, 99 comments)
+4. **4,497 likes** - Historic train on maritime avenue (69,165 views, 179 comments)
+5. **4,384 likes** - Historical event from 1755 (38,606 views, 110 comments)
+
+## Data Distribution Analysis
+
+### Engagement by Category
+
+```python
+# Aggregate metrics by category
+data = df.groupby('Categoria').agg({
+    'Likes': 'sum',
+    'Comentarios': 'sum',
+    'Visualizaciones': 'sum'
+}).reset_index()
+
+print(data)
+```
+
+### Visualizing Category Performance
+
+```python
+# Create stacked bar chart
+fig, ax = plt.subplots(figsize=(12, 6))
+
+bottom = np.zeros(len(data))
+for column in ['Likes', 'Comentarios', 'Visualizaciones']:
+    ax.bar(data['Categoria'], data[column], bottom=bottom, label=column)
+    bottom += data[column]
+
+ax.set_title('Engagement por Categoría', fontsize=16)
+ax.set_xlabel('Categoría', fontsize=12)
+ax.set_ylabel('Cantidad', fontsize=12)
+ax.legend(title='Tipo de Engagement')
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+plt.tight_layout()
+plt.show()
+```
+
+## Interactive Visualization
+
+### Likes vs Comments Scatter Plot
+
+```python
+import plotly.express as px
+
+# Create interactive scatter plot
+fig = px.scatter(
+    df, 
+    x='Likes', 
+    y='Comentarios', 
+    size='Visualizaciones',
+    color='Categoria',
+    hover_data=['Titulo'],
+    title='Relación entre Likes y Comentarios',
+    labels={'Likes': 'Likes', 'Comentarios': 'Comentarios'}
+)
+
+fig.show()
+```
+
+This interactive visualization reveals:
+- Strong positive correlation between likes and comments
+- Bubble size represents view count
+- Color coding shows content category distribution
+- Hover to see video titles and exact metrics
+
+## Key Insights
+
+<Info>
+**Engagement Patterns**: Videos about Canarian identity and major historical infrastructure projects generate the highest engagement, with views exceeding 250,000 and comments reaching over 300.
+</Info>
+
+<Tip>
+**Optimal Duration**: The median video duration is 45.9 seconds, suggesting short-form content performs well for historical education.
+</Tip>
+
+<Warning>
+**Outliers**: Some videos show exceptional performance (14,000+ likes) compared to the mean of 1,316 likes, indicating viral potential for certain topics.
+</Warning>
+
+## Next Steps
+
+- [Statistical Analysis](/analysis/statistics) - Deep dive into correlations and statistical tests
+- [Category Analysis](/analysis/categories) - Detailed breakdown by content type
+
+## Code Repository
+
+All analysis code is available in the project's `EDA.ipynb` notebook with reproducible results and visualizations.

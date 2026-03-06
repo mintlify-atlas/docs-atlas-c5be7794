@@ -1,0 +1,571 @@
+---
+title: Map Customization
+description: Customize markers, popups, and styling for your interactive maps
+---
+
+## Overview
+
+This guide covers how to customize the appearance and behavior of your Folium maps, including markers, popups, base maps, and interactive features.
+
+## Customizing Markers
+
+### Default Markers
+
+The current implementation uses default blue markers:
+
+```python
+folium.Marker(
+    location=[lat, lon],
+    popup=folium.Popup(popup_content, max_width=300),
+).add_to(m)
+```
+
+**Location**: `mapita5.py:55-58`
+
+### Custom Marker Icons
+
+Change marker color, icon, and style:
+
+```python
+folium.Marker(
+    location=[lat, lon],
+    popup=folium.Popup(popup_content, max_width=300),
+    icon=folium.Icon(
+        color='red',           # Options: red, blue, green, purple, orange, darkred,
+                               #          lightred, beige, darkblue, darkgreen, cadetblue,
+                               #          darkpurple, white, pink, lightblue, lightgreen,
+                               #          gray, black, lightgray
+        icon='info-sign',      # Bootstrap icon name
+        prefix='glyphicon'     # Icon library: 'glyphicon' or 'fa' (Font Awesome)
+    )
+).add_to(m)
+```
+
+### Custom Icon Images
+
+Use custom images as markers:
+
+```python
+custom_icon = folium.CustomIcon(
+    icon_image='path/to/icon.png',
+    icon_size=(30, 30),        # Width, height in pixels
+    icon_anchor=(15, 30),      # Point that corresponds to marker location
+    popup_anchor=(0, -30)      # Point where popup should open relative to icon
+)
+
+folium.Marker(
+    location=[lat, lon],
+    popup=folium.Popup(popup_content, max_width=300),
+    icon=custom_icon
+).add_to(m)
+```
+
+### Dynamic Marker Colors
+
+Color-code markers by category or data:
+
+```python
+def get_marker_color(category):
+    color_map = {
+        'Historical': 'red',
+        'Cultural': 'blue',
+        'Natural': 'green',
+        'Architecture': 'purple'
+    }
+    return color_map.get(category, 'gray')
+
+for index, row in df.iterrows():
+    lat, lon = obtener_coordenadas(row['Localización'])
+    if lat is not None and lon is not None:
+        color = get_marker_color(row.get('Category', 'Unknown'))
+        folium.Marker(
+            location=[lat, lon],
+            popup=folium.Popup(popup_content, max_width=300),
+            icon=folium.Icon(color=color)
+        ).add_to(m)
+```
+
+### Circle Markers
+
+Use circles instead of pins for a cleaner look:
+
+```python
+folium.CircleMarker(
+    location=[lat, lon],
+    radius=8,                  # Radius in pixels
+    popup=folium.Popup(popup_content, max_width=300),
+    color='#3186cc',           # Border color
+    fill=True,
+    fillColor='#3186cc',       # Fill color
+    fillOpacity=0.7,
+    weight=2                   # Border width
+).add_to(m)
+```
+
+## Customizing Popups
+
+### Current Popup Implementation
+
+```python
+popup_content = f"""
+<div>
+    <h4>{row['Texto del reel'].split(' ')[0]}</h4>
+    <img src="{ruta_imagen}" alt="Imagen del Reel" style="width:200px;height:auto;">
+    <a href="{row['URL del Post']}">Ver publicación</a>
+</div>
+"""
+folium.Marker(
+    location=[lat, lon],
+    popup=folium.Popup(popup_content, max_width=300),
+).add_to(m)
+```
+
+**Location**: `mapita5.py:48-58`
+
+### Enhanced Popup with Styling
+
+Add CSS for better formatting:
+
+```python
+popup_content = f"""
+<div style="font-family: Arial, sans-serif; padding: 10px;">
+    <h3 style="margin: 0 0 10px 0; color: #2c3e50; border-bottom: 2px solid #3498db;">
+        {row['Texto del reel'].split(' ')[0]}
+    </h3>
+    <img src="{ruta_imagen}" 
+         alt="Imagen del Reel" 
+         style="width:100%; max-width:250px; height:auto; border-radius: 8px; margin: 10px 0;">
+    <p style="margin: 10px 0; color: #555; font-size: 14px;">
+        {row['Texto del reel'][:100]}...
+    </p>
+    <a href="{row['URL del Post']}" 
+       style="display: inline-block; background: #3498db; color: white; 
+              padding: 8px 16px; text-decoration: none; border-radius: 4px;"
+       target="_blank">
+        Ver publicación completa
+    </a>
+</div>
+"""
+
+folium.Marker(
+    location=[lat, lon],
+    popup=folium.Popup(popup_content, max_width=350),
+).add_to(m)
+```
+
+### Popup with Multiple Images
+
+```python
+popup_content = f"""
+<div style="max-width: 300px;">
+    <h4>{row['Titulo']}</h4>
+    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+        <img src="{imagen1}" style="width: 145px; height: auto;">
+        <img src="{imagen2}" style="width: 145px; height: auto;">
+    </div>
+    <p>{row['Descripcion']}</p>
+    <a href="{row['URL']}">Más información</a>
+</div>
+"""
+```
+
+### Popup with Video Embed
+
+```python
+popup_content = f"""
+<div style="width: 320px;">
+    <h4>{row['Titulo']}</h4>
+    <video width="300" height="200" controls>
+        <source src="{video_url}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <p>{row['Descripcion']}</p>
+</div>
+"""
+```
+
+### IFrame Popups
+
+For complex content, use IFrame:
+
+```python
+iframe_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial; padding: 15px; }}
+        img {{ max-width: 100%; border-radius: 8px; }}
+    </style>
+</head>
+<body>
+    <h3>{row['Titulo']}</h3>
+    <img src="{ruta_imagen}">
+    <p>{row['Descripcion']}</p>
+    <a href="{row['URL']}" target="_parent">Ver más</a>
+</body>
+</html>
+"""
+
+iframe = folium.IFrame(html=iframe_html, width=350, height=400)
+folium.Marker(
+    location=[lat, lon],
+    popup=folium.Popup(iframe, max_width=350)
+).add_to(m)
+```
+
+## Customizing the Base Map
+
+### Current Configuration
+
+```python
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+```
+
+**Location**: `mapita5.py:40`
+
+### Different Tile Providers
+
+Change the base map appearance:
+
+```python
+# Satellite imagery
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attr='Esri'
+)
+
+# Dark theme
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    tiles='CartoDB dark_matter'
+)
+
+# Terrain
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    tiles='Stamen Terrain'
+)
+
+# Watercolor (artistic)
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    tiles='Stamen Watercolor'
+)
+```
+
+### Available Tile Providers
+
+| Provider | Style | Best For |
+|----------|-------|----------|
+| `OpenStreetMap` | Default streets | General purpose |
+| `CartoDB positron` | Light theme | Clean, minimal |
+| `CartoDB dark_matter` | Dark theme | Modern look |
+| `Stamen Terrain` | Topographic | Geographic features |
+| `Stamen Watercolor` | Artistic | Creative projects |
+| `Esri World Imagery` | Satellite | Aerial views |
+
+### Map Controls
+
+Customize zoom, scroll, and other controls:
+
+```python
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    zoom_control=True,          # Show zoom buttons
+    scrollWheelZoom=True,       # Allow mouse wheel zoom
+    dragging=True,              # Allow panning
+    max_zoom=18,                # Maximum zoom level
+    min_zoom=3,                 # Minimum zoom level
+    max_bounds=True             # Restrict panning to map bounds
+)
+```
+
+### Fullscreen Control
+
+Add fullscreen button:
+
+```python
+from folium import plugins
+
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+plugins.Fullscreen(
+    position='topright',
+    title='Pantalla completa',
+    title_cancel='Salir de pantalla completa'
+).add_to(m)
+```
+
+## Advanced Features
+
+### Marker Clustering
+
+Group nearby markers for better performance:
+
+```python
+from folium import plugins
+
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+marker_cluster = plugins.MarkerCluster().add_to(m)
+
+for index, row in df.iterrows():
+    lat, lon = obtener_coordenadas(row['Localización'])
+    if lat is not None and lon is not None:
+        folium.Marker(
+            location=[lat, lon],
+            popup=folium.Popup(popup_content, max_width=300)
+        ).add_to(marker_cluster)  # Add to cluster instead of map
+```
+
+### Heat Maps
+
+Visualize density of locations:
+
+```python
+from folium import plugins
+
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+
+# Collect all coordinates
+coordinates = []
+for index, row in df.iterrows():
+    lat, lon = obtener_coordenadas(row['Localización'])
+    if lat is not None and lon is not None:
+        coordinates.append([lat, lon])
+
+# Add heat map layer
+plugins.HeatMap(coordinates).add_to(m)
+```
+
+### Drawing Tools
+
+Allow users to draw on the map:
+
+```python
+from folium import plugins
+
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+plugins.Draw(
+    export=True,
+    filename='my_data.geojson',
+    position='topleft'
+).add_to(m)
+```
+
+### Minimap
+
+Add overview minimap:
+
+```python
+from folium import plugins
+
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+minimap = plugins.MiniMap(toggle_display=True)
+m.add_child(minimap)
+```
+
+### Search Control
+
+Add location search:
+
+```python
+from folium import plugins
+
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+plugins.Geocoder().add_to(m)
+```
+
+## Styling the HTML Output
+
+### Custom CSS
+
+Inject custom styles into the generated HTML:
+
+```python
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+
+# Add custom CSS
+custom_css = """
+<style>
+    .leaflet-popup-content-wrapper {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .leaflet-popup-content h4 {
+        color: #2c3e50;
+        font-family: 'Georgia', serif;
+    }
+</style>
+"""
+m.get_root().html.add_child(folium.Element(custom_css))
+```
+
+### Custom JavaScript
+
+Add interactivity:
+
+```python
+custom_js = """
+<script>
+    // Add click tracking
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Map loaded successfully');
+        
+        // Track marker clicks
+        var markers = document.querySelectorAll('.leaflet-marker-icon');
+        markers.forEach(function(marker) {
+            marker.addEventListener('click', function() {
+                console.log('Marker clicked');
+            });
+        });
+    });
+</script>
+"""
+m.get_root().html.add_child(folium.Element(custom_js))
+```
+
+## Best Practices
+
+### Image Optimization
+
+1. **Resize before upload**: Keep images under 200-300px width for popups
+2. **Compress images**: Use JPEG with 70-80% quality
+3. **Use WebP format**: Better compression than JPEG (if browser support allows)
+
+### Performance
+
+1. **Limit markers**: For 100+ markers, use marker clustering
+2. **Lazy load popups**: Don't embed large content directly
+3. **Cache images locally**: As done in `mapita5.py:23-37`
+4. **Optimize tile loading**: Use appropriate zoom levels
+
+### Accessibility
+
+1. **Alt text**: Always include alt attributes on images
+2. **Keyboard navigation**: Ensure popups are keyboard accessible
+3. **Color contrast**: Use high-contrast colors for text
+4. **Screen reader support**: Add ARIA labels where appropriate
+
+### Mobile Optimization
+
+```python
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    width='100%',              # Responsive width
+    height='100%',             # Responsive height
+    zoom_control=True,
+    scrollWheelZoom=False,     # Prevent accidental zoom on mobile
+    dragging=True,
+    tap=True,                  # Enable touch interactions
+    tap_tolerance=15           # Touch target size
+)
+```
+
+## Example: Complete Custom Map
+
+Here's a fully customized version of `mapita5.py`:
+
+```python
+import folium
+from folium import plugins
+import pandas as pd
+import requests
+import os
+
+if not os.path.exists("imagenes"):
+    os.makedirs("imagenes")
+
+df = pd.read_excel('excel_info_1.xlsx')
+
+def obtener_coordenadas(localizacion):
+    try:
+        lat, lon = map(float, localizacion.split(','))
+        return lat, lon
+    except Exception as e:
+        print(f"Error: {localizacion} - {e}")
+        return None, None
+
+def descargar_imagen(url, index):
+    try:
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            ruta_imagen = f"imagenes/imagen_{index}.jpg"
+            with open(ruta_imagen, 'wb') as file:
+                for chunk in response.iter_content(1024):
+                    file.write(chunk)
+            return ruta_imagen
+    except Exception as e:
+        print(f"Error: {url} - {e}")
+    return None
+
+# Create map with custom styling
+m = folium.Map(
+    location=[28.0, -15.0],
+    zoom_start=6,
+    tiles='CartoDB positron',
+    max_bounds=True
+)
+
+# Add marker clustering
+marker_cluster = plugins.MarkerCluster().add_to(m)
+
+# Add fullscreen control
+plugins.Fullscreen(
+    position='topright',
+    title='Pantalla completa',
+    title_cancel='Salir'
+).add_to(m)
+
+for index, row in df.iterrows():
+    lat, lon = obtener_coordenadas(row['Localización'])
+    if lat is not None and lon is not None:
+        ruta_imagen = descargar_imagen(row['URL de imagen'], index)
+        if ruta_imagen:
+            # Enhanced popup
+            popup_content = f"""
+            <div style="font-family: Arial; padding: 10px; max-width: 300px;">
+                <h3 style="margin: 0 0 10px; color: #2c3e50; border-bottom: 2px solid #3498db;">
+                    {row['Texto del reel'].split(' ')[0]}
+                </h3>
+                <img src="{ruta_imagen}" 
+                     alt="Imagen del Reel" 
+                     style="width: 100%; border-radius: 8px; margin: 10px 0;">
+                <p style="color: #555; font-size: 13px;">
+                    {row['Texto del reel'][:150]}...
+                </p>
+                <a href="{row['URL del Post']}" 
+                   target="_blank"
+                   style="display: inline-block; background: #3498db; color: white; 
+                          padding: 8px 16px; text-decoration: none; border-radius: 4px;
+                          font-size: 13px;">
+                    📱 Ver publicación
+                </a>
+            </div>
+            """
+            
+            # Custom marker icon
+            folium.Marker(
+                location=[lat, lon],
+                popup=folium.Popup(popup_content, max_width=350),
+                icon=folium.Icon(
+                    color='red',
+                    icon='info-sign',
+                    prefix='glyphicon'
+                )
+            ).add_to(marker_cluster)
+
+m.save("index.html")
+print("✅ Mapa generado: 'index.html'")
+```
+
+## Next Steps
+
+- [Map Overview](/maps/overview) - Return to overview
+- [Generation Process](/maps/generation) - Learn about the map generation workflow

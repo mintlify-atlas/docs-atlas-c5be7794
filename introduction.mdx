@@ -1,0 +1,127 @@
+---
+title: Introduction
+description: Welcome to Historia Para Gandules - Interactive geospatial visualization of historical Canary Islands content
+---
+
+# Historia Para Gandules
+
+Historia Para Gandules is an interactive data platform that maps and analyzes historical Instagram content about the Canary Islands. The project combines web scraping, geospatial visualization, and data analysis to create an engaging exploration of local history and culture.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running with Historia in minutes
+  </Card>
+  <Card title="Interactive Maps" icon="map" href="/maps/overview">
+    Explore geospatial visualizations
+  </Card>
+  <Card title="Data Analysis" icon="chart-line" href="/analysis/eda">
+    Learn about exploratory data analysis
+  </Card>
+  <Card title="API Reference" icon="code" href="/reference/api">
+    Technical documentation
+  </Card>
+</CardGroup>
+
+## What is Historia Para Gandules?
+
+Historia Para Gandules is a data platform that:
+
+- **Scrapes Instagram content** from the @historiaparagandules account using Instaloader
+- **Generates interactive maps** with Folium showing the geographic locations of historical content
+- **Analyzes engagement metrics** including likes, comments, and views across different content categories
+- **Visualizes data patterns** through statistical analysis and exploratory data analysis
+- **Categorizes content** by topic (architecture, historical events, biographies, etc.)
+
+## Key Features
+
+<CardGroup cols={3}>
+  <Card title="Instagram Scraping" icon="instagram">
+    Automated content collection using Instaloader library
+  </Card>
+  <Card title="Geolocation Mapping" icon="location-dot">
+    Interactive Leaflet maps with location markers and popups
+  </Card>
+  <Card title="Statistical Analysis" icon="chart-bar">
+    Comprehensive EDA with pandas and visualization libraries
+  </Card>
+  <Card title="Content Categorization" icon="layer-group">
+    Organized by topics like architecture, biographies, and historical events
+  </Card>
+  <Card title="Excel Export" icon="file-excel">
+    Data management and export capabilities
+  </Card>
+  <Card title="Jupyter Notebooks" icon="book">
+    Interactive analysis workflows
+  </Card>
+</CardGroup>
+
+## Project Structure
+
+The Historia platform consists of several key components:
+
+- **`scraping5.py`** - Instagram scraper that collects video metadata, captions, and engagement metrics
+- **`mapita5.py`** - Map generator that creates interactive Folium visualizations with geolocation data
+- **`EDA.ipynb`** - Exploratory data analysis notebook with statistical insights and visualizations
+- **`llms.ipynb`** - Data processing and enrichment notebook
+- **`index.html`** - Interactive map output displaying all geolocated content
+- **Excel files** - Structured data storage with post metadata and location information
+
+## Use Cases
+
+Historia Para Gandules is ideal for:
+
+- **Cultural researchers** studying Canary Islands history and heritage
+- **Data analysts** exploring social media engagement patterns
+- **Educators** teaching local history through interactive visualizations
+- **Developers** building similar geospatial data platforms
+- **Social media managers** analyzing content performance
+
+## Data Categories
+
+The platform analyzes content across five main categories:
+
+1. **Toponimia de Lugares** - Place names and geographic origins
+2. **Curiosidades Históricas** - Historical curiosities and interesting facts
+3. **Biografías de Personajes Históricos** - Historical figure biographies
+4. **Arquitectura** - Architectural heritage and buildings
+5. **Acontecimientos Históricos** - Major historical events
+
+Each category includes detailed analytics on engagement metrics, view counts, and geographic distribution.
+
+## Getting Started
+
+Ready to explore the platform? Check out our guides:
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Set up your development environment
+  </Card>
+  <Card title="Quick Start Guide" icon="play" href="/quickstart">
+    Run your first analysis
+  </Card>
+  <Card title="Data Collection" icon="database" href="/data/scraping">
+    Learn about scraping Instagram content
+  </Card>
+  <Card title="Map Generation" icon="map-location-dot" href="/maps/generation">
+    Create interactive maps
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+Historia is built with modern Python data tools:
+
+- **Instaloader** - Instagram content scraping
+- **Folium** - Interactive map generation with Leaflet.js
+- **Pandas** - Data manipulation and analysis
+- **Matplotlib & Seaborn** - Data visualization
+- **Plotly** - Interactive charts and graphs
+- **Jupyter** - Interactive development environment
+
+## Community
+
+Historia Para Gandules is an open-source project focused on preserving and sharing Canary Islands cultural heritage through data visualization.
+
+<Card title="View on GitHub" icon="github" href="https://github.com/henry94bt/Historia">
+  Explore the source code and contribute to the project
+</Card>

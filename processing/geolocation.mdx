@@ -1,0 +1,287 @@
+---
+title: 'Geolocation Processing'
+description: 'Extracting and parsing geographic coordinates from Instagram data'
+---
+
+## Overview
+
+The Historia Para Gandules project includes geographic data for each Instagram post, enabling spatial analysis and map visualization. The geolocation data is stored as coordinate pairs (latitude, longitude) in the source Excel files.
+
+## Coordinate Format
+
+Geographic data is stored in the **Localización** column with the following format:
+
+```
+latitude, longitude
+```
+
+### Example Coordinates
+
+| Post | Location | Coordinates |
+|------|----------|-------------|
+| Llanos de la Pez | Gran Canaria | `27.96672637521568, -15.583579704293795` |
+| Los Realejos | Tenerife | `28.38524103061549, -16.584184256093764` |
+| Puerto de la Cruz | Tenerife | `28.416793733756542, -16.547739501330376` |
+| La Tejita | Tenerife | `28.031803032509583, -16.556561573310354` |
+| La Laguna | Tenerife | `28.489527094742282, -16.314934959377688` |
+
+## Data Extraction
+
+The coordinate data is already extracted during the scraping process and stored directly in the Excel files. No additional parsing is required for basic usage.
+
+### Loading Geolocation Data
+
+```python
+import pandas as pd
+
+# Load data with coordinates
+df = pd.read_excel('excel_info_1.xlsx')
+
+# Access coordinates
+coordinates = df['Localización']
+print(coordinates.head())
+```
+
+Output:
+```
+0    27.96672637521568, -15.583579704293795
+1    28.38524103061549, -16.584184256093764
+2   28.416793733756542, -16.547739501330376
+3   28.031803032509583, -16.556561573310354
+4   28.489527094742282, -16.314934959377688
+Name: Localización, dtype: object
+```
+
+## Parsing Coordinates
+
+To use the coordinates for mapping or spatial analysis, split them into separate latitude and longitude columns:
+
+```python
+# Split coordinates into separate columns
+df[['Latitude', 'Longitude']] = df['Localización'].str.split(',', expand=True)
+
+# Convert to numeric type
+df['Latitude'] = pd.to_numeric(df['Latitude'])
+df['Longitude'] = pd.to_numeric(df['Longitude'])
+
+print(df[['Localización', 'Latitude', 'Longitude']].head())
+```
+
+## Geographic Coverage
+
+### Canary Islands Distribution
+
+The dataset covers historical locations across the Canary Islands, primarily:
+
+- **Gran Canaria** - Las Palmas, Telde, Agüimes, etc.
+- **Tenerife** - La Laguna, Puerto de la Cruz, Santa Cruz, etc.
+- **Lanzarote** - Historical fortifications and settlements
+- **Fuerteventura** - Referenced in historical context
+
+<Info>
+All coordinates use the **WGS84** coordinate system (standard for GPS and web mapping).
+</Info>
+
+## Coordinate Validation
+
+Validate that coordinates fall within the Canary Islands boundaries:
+
+```python
+# Canary Islands approximate boundaries
+LAT_MIN, LAT_MAX = 27.5, 29.5  # Latitude range
+LON_MIN, LON_MAX = -18.5, -13.0  # Longitude range
+
+# Validate coordinates
+def validate_coordinates(lat, lon):
+    return (LAT_MIN <= lat <= LAT_MAX) and (LON_MIN <= lon <= LON_MAX)
+
+df['Valid_Coords'] = df.apply(
+    lambda row: validate_coordinates(row['Latitude'], row['Longitude']), 
+    axis=1
+)
+
+print(f"Valid coordinates: {df['Valid_Coords'].sum()} / {len(df)}")
+```
+
+## Mapping Visualization
+
+### Creating a Simple Map
+
+Use the coordinates to visualize historical content locations:
+
+```python
+import folium
+from folium.plugins import MarkerCluster
+
+# Create base map centered on Canary Islands
+m = folium.Map(
+    location=[28.3, -15.5],  # Center of Canary Islands
+    zoom_start=8,
+    tiles='OpenStreetMap'
+)
+
+# Add marker cluster
+marker_cluster = MarkerCluster().add_to(m)
+
+# Add markers for each post
+for idx, row in df.iterrows():
+    folium.Marker(
+        location=[row['Latitude'], row['Longitude']],
+        popup=f"<b>{row['Titulo']}</b><br>"
+              f"Likes: {row['Likes']}<br>"
+              f"Views: {row['Visualizaciones']}",
+        tooltip=row['Categoria']
+    ).add_to(marker_cluster)
+
+# Save map
+m.save('historical_locations_map.html')
+```
+
+### Heatmap Visualization
+
+Create a heatmap showing content concentration:
+
+```python
+from folium.plugins import HeatMap
+
+# Create heatmap data
+heat_data = [[row['Latitude'], row['Longitude'], row['Visualizaciones']] 
+             for idx, row in df.iterrows()]
+
+# Create base map
+m = folium.Map(location=[28.3, -15.5], zoom_start=8)
+
+# Add heatmap layer
+HeatMap(heat_data, radius=15, blur=25, max_zoom=13).add_to(m)
+
+m.save('engagement_heatmap.html')
+```
+
+## Spatial Analysis
+
+### Distance Calculations
+
+Calculate distances between historical locations:
+
+```python
+from geopy.distance import geodesic
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance in kilometers between two points"""
+    point1 = (lat1, lon1)
+    point2 = (lat2, lon2)
+    return geodesic(point1, point2).kilometers
+
+# Example: Distance from Las Palmas to La Laguna
+las_palmas = (28.1005, -15.4160)
+la_laguna = (28.4895, -16.3149)
+
+distance = calculate_distance(*las_palmas, *la_laguna)
+print(f"Distance: {distance:.2f} km")
+```
+
+### Geographic Clustering
+
+Identify content clusters by location:
+
+```python
+from sklearn.cluster import DBSCAN
+import numpy as np
+
+# Prepare coordinate array
+coords = df[['Latitude', 'Longitude']].values
+
+# Apply DBSCAN clustering
+# epsilon in degrees (~0.1 degrees ≈ 11 km)
+clustering = DBSCAN(eps=0.1, min_samples=3).fit(coords)
+
+df['Location_Cluster'] = clustering.labels_
+
+# Analyze clusters
+cluster_stats = df.groupby('Location_Cluster').agg({
+    'Likes': 'mean',
+    'Visualizaciones': 'mean',
+    'Categoria': lambda x: x.mode()[0] if len(x) > 0 else None
+})
+
+print(cluster_stats)
+```
+
+## Integration with Categories
+
+Combine geographic and categorical data for insights:
+
+```python
+# Top locations by category
+for categoria in df['Categoria'].unique():
+    cat_data = df[df['Categoria'] == categoria]
+    
+    print(f"\n{categoria}:")
+    print(f"  Posts: {len(cat_data)}")
+    print(f"  Avg Engagement: {cat_data['Visualizaciones'].mean():.0f}")
+    
+    # Most common location area (rounded to 1 decimal)
+    common_lat = round(cat_data['Latitude'].mode()[0], 1)
+    common_lon = round(cat_data['Longitude'].mode()[0], 1)
+    print(f"  Common Location: ({common_lat}, {common_lon})")
+```
+
+## Coordinate Precision
+
+<Warning>
+The coordinates in the dataset have **high precision** (up to 15 decimal places), which provides accuracy to within a few centimeters. For most applications, rounding to 6 decimal places (±0.11 meters) is sufficient.
+</Warning>
+
+### Rounding Coordinates
+
+```python
+# Round to 6 decimal places for practical use
+df['Latitude_Rounded'] = df['Latitude'].round(6)
+df['Longitude_Rounded'] = df['Longitude'].round(6)
+```
+
+## Export for GIS Tools
+
+Export coordinates for use in GIS applications:
+
+```python
+# Export as GeoJSON
+import json
+
+features = []
+for idx, row in df.iterrows():
+    feature = {
+        "type": "Feature",
+        "geometry": {
+            "type": "Point",
+            "coordinates": [row['Longitude'], row['Latitude']]
+        },
+        "properties": {
+            "title": row['Titulo'],
+            "category": row['Categoria'],
+            "likes": int(row['Likes']),
+            "views": int(row['Visualizaciones']),
+            "url": row['URL del Post']
+        }
+    }
+    features.append(feature)
+
+geojson = {
+    "type": "FeatureCollection",
+    "features": features
+}
+
+with open('historical_content.geojson', 'w') as f:
+    json.dump(geojson, f, indent=2)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Data Pipeline" icon="diagram-project" href="/processing/pipeline">
+    Return to the full pipeline overview
+  </Card>
+  <Card title="Data Enrichment" icon="wand-magic-sparkles" href="/processing/enrichment">
+    Learn about LLM-powered categorization
+  </Card>
+</CardGroup>

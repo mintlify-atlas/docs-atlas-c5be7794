@@ -1,0 +1,180 @@
+---
+title: 'Data Sources'
+description: 'Instagram content sources for Historia Para Gandules project'
+---
+
+## Primary Data Source
+
+Historia Para Gandules collects all data from a single Instagram account:
+
+<Card title="@historiaparagandules" icon="instagram" href="https://www.instagram.com/historiaparagandules">
+  The official Historia Para Gandules Instagram account containing historical educational content about Puerto Rico.
+</Card>
+
+## Account Overview
+
+The `@historiaparagandules` Instagram account serves as the sole data source for this project. It publishes historical educational content focused on Puerto Rican history and culture.
+
+### Content Focus
+
+<AccordionGroup>
+  <Accordion title="Historical Education">
+    Educational videos explaining historical events, figures, and cultural aspects of Puerto Rico.
+  </Accordion>
+  
+  <Accordion title="Video Format">
+    Content is primarily delivered through Instagram Reels - short-form vertical videos optimized for mobile viewing.
+  </Accordion>
+  
+  <Accordion title="Accessible Language">
+    Content uses colloquial and accessible language to make history engaging for a broad audience ("para gandules" = "for lazy people" in a playful, approachable way).
+  </Accordion>
+</AccordionGroup>
+
+## Content Types
+
+The scraper specifically targets **video posts** (reels) from the account:
+
+<CardGroup cols={2}>
+  <Card title="Video Posts (Reels)" icon="video">
+    **Collected**: Short-form videos containing historical narratives
+    
+    The scraper filters for `post.is_video == True` to capture only video content.
+  </Card>
+  
+  <Card title="Image Posts" icon="image">
+    **Not Collected**: Static image posts are filtered out
+    
+    The current implementation focuses exclusively on video content.
+  </Card>
+</CardGroup>
+
+### Why Video-Only?
+
+The project focuses on video content because:
+
+- **Rich engagement data**: Videos provide more metrics (views, duration)
+- **Primary content format**: Reels are the main content type for the account
+- **Geospatial visualization**: Video content is more suitable for the interactive timeline visualization
+- **Consistent structure**: Videos have standardized metadata fields
+
+## Data Collection Method
+
+Data is collected using the **Instaloader** Python library, which accesses Instagram's public API:
+
+```python
+import instaloader
+
+L = instaloader.Instaloader()
+profile_name = "historiaparagandules"
+profile = instaloader.Profile.from_username(L.context, profile_name)
+
+# Filter for video posts only
+for post in profile.get_posts():
+    if post.is_video:
+        # Extract video metadata
+```
+
+<Info>
+  The scraper only accesses **publicly available** data. No authentication or login is required.
+</Info>
+
+## Available Metrics
+
+For each video post, the scraper collects:
+
+### Temporal Data
+- **Publication date and time**: When the content was posted
+
+### Content Data
+- **Caption/text**: The description or narrative accompanying the video
+- **Video URL**: Direct link to the video file
+- **Post URL**: Permalink to the Instagram post
+
+### Engagement Metrics
+- **Likes**: Number of likes received
+- **Comments**: Number of comments
+- **Views**: Total video view count
+
+### Technical Metadata
+- **Duration**: Video length in seconds
+
+## Data Freshness
+
+The scraping script collects all historical posts from the account's inception. To update the dataset:
+
+<Steps>
+  <Step title="Run Scraper">
+    Execute `scraping5.py` to collect the latest posts
+  </Step>
+  
+  <Step title="Incremental Updates">
+    The scraper iterates through all posts each time. For large accounts, consider implementing date-based filtering to collect only new posts.
+  </Step>
+  
+  <Step title="Merge Data">
+    Combine new data with existing datasets, removing duplicates based on post URLs
+  </Step>
+</Steps>
+
+## Data Limitations
+
+<Warning>
+  Instagram's API and data availability may change over time, affecting which fields are accessible.
+</Warning>
+
+### Current Limitations
+
+1. **Public data only**: Only publicly visible information is collected
+2. **No historical edits**: Caption edits after publication are not tracked
+3. **Deleted posts**: Posts deleted from Instagram will not appear in subsequent scrapes
+4. **Rate limiting**: Instagram may throttle frequent scraping requests
+5. **View counts**: May show as "No disponible" for older posts or due to API restrictions
+
+## Future Data Sources
+
+Potential expansions for the data collection:
+
+<CardGroup cols={2}>
+  <Card title="Additional Accounts" icon="users">
+    Incorporate related Puerto Rican historical education accounts
+  </Card>
+  
+  <Card title="Cross-Platform" icon="share-nodes">
+    Expand to TikTok, YouTube, or other platforms where similar content exists
+  </Card>
+  
+  <Card title="Manual Curation" icon="hand">
+    Add manually curated historical data not available on social media
+  </Card>
+  
+  <Card title="Geolocation Tags" icon="location-dot">
+    Extract location data from posts that include geotags
+  </Card>
+</CardGroup>
+
+## Data Ethics
+
+<Note>
+  This project collects only publicly available data and respects Instagram's terms of service. The data is used for educational and research purposes.
+</Note>
+
+### Ethical Considerations
+
+- **Public content**: Only publicly accessible posts are scraped
+- **No personal data**: User comments and personal information are not collected
+- **Attribution**: Content is attributed to the original creator
+- **Non-commercial**: Data is used for educational visualization purposes
+- **Rate limiting**: Scraping is performed responsibly to avoid overloading Instagram's servers
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Scraping Guide" icon="code" href="/data/scraping">
+    Learn how to run the Instagram scraper
+  </Card>
+  
+  <Card title="Data Schema" icon="table" href="/data/schema">
+    Explore the complete data structure and field specifications
+  </Card>
+</CardGroup>

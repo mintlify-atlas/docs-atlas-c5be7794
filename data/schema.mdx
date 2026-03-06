@@ -1,0 +1,410 @@
+---
+title: 'Data Schema'
+description: 'Complete data structure and field specifications for Historia Para Gandules content'
+---
+
+## Overview
+
+The Historia Para Gandules dataset follows a structured schema with 8 fields per video post. Data is collected from Instagram and stored in CSV format with UTF-8 encoding.
+
+## Schema Structure
+
+The dataset is exported as a CSV file with the following headers:
+
+```csv
+Fecha,Texto del reel,Likes,Comentarios,URL del video,Visualizaciones,Duración del video (s),URL del Post
+```
+
+## Field Specifications
+
+### Temporal Fields
+
+<ParamField path="Fecha" type="DateTime" required>
+  **Publication timestamp** - Date and time when the video was posted to Instagram
+  
+  - **Format**: `YYYY-MM-DD HH:MM:SS`
+  - **Example**: `2024-01-15 14:30:00`
+  - **Source**: `post.date.strftime('%Y-%m-%d %H:%M:%S')`
+  - **Timezone**: UTC (from Instagram API)
+  
+  ```python
+  fecha = post.date.strftime('%Y-%m-%d %H:%M:%S')
+  ```
+</ParamField>
+
+### Content Fields
+
+<ParamField path="Texto del reel" type="String">
+  **Caption/description text** - The text content accompanying the video
+  
+  - **Max length**: Variable (Instagram allows up to 2,200 characters)
+  - **Default value**: `"Sin texto"` if no caption provided
+  - **Encoding**: UTF-8
+  - **May contain**: Hashtags, mentions, emojis, line breaks
+  
+  ```python
+  texto = post.caption or "Sin texto"
+  ```
+  
+  <Tip>
+    This field often contains the historical narrative or educational content describing the video's topic.
+  </Tip>
+</ParamField>
+
+<ParamField path="URL del video" type="String (URL)" required>
+  **Direct video file URL** - CDN link to the actual video file
+  
+  - **Format**: Full HTTPS URL to Instagram's CDN
+  - **Default value**: `"Sin URL"` if unavailable
+  - **Expiration**: URLs may expire after a period of time
+  - **Usage**: Download or stream the video content
+  
+  ```python
+  url_video = post.video_url or "Sin URL"
+  ```
+  
+  <Warning>
+    Video URLs from Instagram CDN may expire. Download and store videos locally if long-term access is needed.
+  </Warning>
+</ParamField>
+
+<ParamField path="URL del Post" type="String (URL)" required>
+  **Instagram post permalink** - Permanent link to the Instagram post
+  
+  - **Format**: `https://www.instagram.com/p/{shortcode}/`
+  - **Example**: `https://www.instagram.com/p/ABC123xyz/`
+  - **Uniqueness**: Unique identifier for each post
+  - **Permanence**: Stable link unless post is deleted
+  
+  ```python
+  url_post = f"https://www.instagram.com/p/{post.shortcode}/"
+  ```
+  
+  <Info>
+    Use this field as the primary key to identify unique posts and avoid duplicates.
+  </Info>
+</ParamField>
+
+### Engagement Fields
+
+<ParamField path="Likes" type="Integer" default="0">
+  **Like count** - Number of likes the video has received
+  
+  - **Range**: 0 to unlimited
+  - **Default value**: `0` if unavailable
+  - **Type**: Non-negative integer
+  - **Note**: Count is at the time of scraping (may increase over time)
+  
+  ```python
+  likes = post.likes or 0
+  ```
+</ParamField>
+
+<ParamField path="Comentarios" type="Integer" default="0">
+  **Comment count** - Number of comments on the video
+  
+  - **Range**: 0 to unlimited
+  - **Default value**: `0` if unavailable
+  - **Type**: Non-negative integer
+  - **Note**: Count reflects total comments at scraping time
+  - **Limitation**: Individual comment text is not collected
+  
+  ```python
+  comentarios = post.comments or 0
+  ```
+</ParamField>
+
+<ParamField path="Visualizaciones" type="Integer or String">
+  **View count** - Total number of times the video has been viewed
+  
+  - **Range**: 0 to unlimited when available
+  - **Default value**: `"No disponible"` if Instagram doesn't provide the data
+  - **Type**: Integer (or string for unavailable cases)
+  - **Accuracy**: Instagram's view count methodology
+  
+  ```python
+  visualizaciones = post.video_view_count or "No disponible"
+  ```
+  
+  <Note>
+    View counts may not be available for all posts depending on Instagram's API restrictions or account settings.
+  </Note>
+</ParamField>
+
+### Technical Fields
+
+<ParamField path="Duración del video (s)" type="Float or String">
+  **Video duration** - Length of the video in seconds
+  
+  - **Unit**: Seconds (with decimal precision)
+  - **Example**: `45.5` for a 45.5-second video
+  - **Default value**: `"No disponible"` if unavailable
+  - **Type**: Float (or string for unavailable cases)
+  - **Typical range**: 0 to 90 seconds (Instagram Reels limit)
+  
+  ```python
+  duracion_video = post.video_duration or "No disponible"
+  ```
+</ParamField>
+
+## Complete Example
+
+Here's a complete record with all fields populated:
+
+```csv
+Fecha,Texto del reel,Likes,Comentarios,URL del video,Visualizaciones,Duración del video (s),URL del Post
+2024-01-15 14:30:00,"🇵🇷 La historia del Grito de Lares - el primer intento de independencia de Puerto Rico en 1868. #HistoriaPR #PuertoRico #Historia",1250,45,https://instagram.com/cdn/video.mp4,15000,45.5,https://www.instagram.com/p/ABC123xyz/
+```
+
+## Data Types Reference
+
+<ResponseField name="Field Type Summary" type="object">
+  <Expandable title="Python to CSV Type Mapping">
+    | Field | Python Type | CSV Storage | Notes |
+    |-------|-------------|-------------|-------|
+    | Fecha | `datetime` | `string` | Formatted as YYYY-MM-DD HH:MM:SS |
+    | Texto del reel | `str` | `string` | UTF-8 encoded, quoted if contains commas |
+    | Likes | `int` | `integer` | Always numeric |
+    | Comentarios | `int` | `integer` | Always numeric |
+    | URL del video | `str` | `string` | Full URL or "Sin URL" |
+    | Visualizaciones | `int` or `str` | `mixed` | Integer or "No disponible" |
+    | Duración del video | `float` or `str` | `mixed` | Float or "No disponible" |
+    | URL del Post | `str` | `string` | Always formatted as permalink |
+  </Expandable>
+</ResponseField>
+
+## Data Validation
+
+When working with the collected data, apply these validation rules:
+
+<CodeGroup>
+```python Validation Example
+import pandas as pd
+from datetime import datetime
+
+def validate_record(row):
+    """Validate a single data record"""
+    errors = []
+    
+    # Validate Fecha
+    try:
+        datetime.strptime(row['Fecha'], '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        errors.append("Invalid date format")
+    
+    # Validate numeric fields
+    if not isinstance(row['Likes'], (int, float)) or row['Likes'] < 0:
+        errors.append("Invalid likes count")
+    
+    if not isinstance(row['Comentarios'], (int, float)) or row['Comentarios'] < 0:
+        errors.append("Invalid comments count")
+    
+    # Validate URLs
+    if not row['URL del Post'].startswith('https://www.instagram.com/p/'):
+        errors.append("Invalid post URL")
+    
+    # Validate duration if numeric
+    if row['Duración del video (s)'] != "No disponible":
+        if not isinstance(row['Duración del video (s)'], (int, float)) or row['Duración del video (s)'] < 0:
+            errors.append("Invalid duration")
+    
+    return errors
+
+# Load and validate CSV
+df = pd.read_csv('informacion_reels_simple.csv')
+for idx, row in df.iterrows():
+    errors = validate_record(row)
+    if errors:
+        print(f"Row {idx}: {errors}")
+```
+
+```javascript Type Definitions (TypeScript)
+interface HistoriaParaGandulesPost {
+  fecha: string; // YYYY-MM-DD HH:MM:SS format
+  textoDelReel: string;
+  likes: number;
+  comentarios: number;
+  urlDelVideo: string; // URL or "Sin URL"
+  visualizaciones: number | "No disponible";
+  duracionDelVideo: number | "No disponible"; // in seconds
+  urlDelPost: string; // Instagram permalink
+}
+
+// Parser example
+function parseCSVRow(row: string[]): HistoriaParaGandulesPost {
+  return {
+    fecha: row[0],
+    textoDelReel: row[1],
+    likes: parseInt(row[2]),
+    comentarios: parseInt(row[3]),
+    urlDelVideo: row[4],
+    visualizaciones: row[5] === "No disponible" ? "No disponible" : parseInt(row[5]),
+    duracionDelVideo: row[6] === "No disponible" ? "No disponible" : parseFloat(row[6]),
+    urlDelPost: row[7]
+  };
+}
+```
+</CodeGroup>
+
+## Missing Data Handling
+
+Some fields may contain default values when data is unavailable:
+
+<AccordionGroup>
+  <Accordion title="Texto del reel: 'Sin texto'">
+    **Reason**: Post was published without a caption
+    
+    **Handling**: Treat as empty string or null in analysis
+    
+    **Frequency**: Rare (most posts have captions)
+  </Accordion>
+  
+  <Accordion title="URL del video: 'Sin URL'">
+    **Reason**: Video URL is not accessible (rare)
+    
+    **Handling**: Skip video download, use only metadata
+    
+    **Frequency**: Very rare
+  </Accordion>
+  
+  <Accordion title="Visualizaciones: 'No disponible'">
+    **Reason**: Instagram API doesn't provide view count for this post
+    
+    **Handling**: Exclude from view-based analysis or impute based on likes
+    
+    **Frequency**: Can occur for older posts or due to API changes
+  </Accordion>
+  
+  <Accordion title="Duración del video: 'No disponible'">
+    **Reason**: Video duration metadata is missing
+    
+    **Handling**: Download video to calculate duration locally
+    
+    **Frequency**: Rare
+  </Accordion>
+</AccordionGroup>
+
+## Data Processing Pipeline
+
+Typical workflow for working with the collected data:
+
+<Steps>
+  <Step title="Collection">
+    Run `scraping5.py` to generate `informacion_reels_simple.csv`
+  </Step>
+  
+  <Step title="Validation">
+    Validate data types, check for missing values, verify URL formats
+  </Step>
+  
+  <Step title="Cleaning">
+    Handle missing data, remove duplicates, normalize text encoding
+  </Step>
+  
+  <Step title="Enrichment">
+    Add calculated fields (e.g., engagement rate, posting day/time)
+  </Step>
+  
+  <Step title="Transformation">
+    Convert to desired format (JSON, database, etc.) for visualization
+  </Step>
+</Steps>
+
+## Example Data Transformations
+
+<Tabs>
+  <Tab title="Calculate Engagement Rate">
+    ```python
+    import pandas as pd
+    
+    df = pd.read_csv('informacion_reels_simple.csv')
+    
+    # Calculate engagement rate
+    df['engagement_rate'] = (df['Likes'] + df['Comentarios']) / df['Visualizaciones'].replace('No disponible', 0)
+    
+    # Handle division by zero
+    df['engagement_rate'] = df['engagement_rate'].replace([float('inf'), -float('inf')], 0)
+    ```
+  </Tab>
+  
+  <Tab title="Extract Hashtags">
+    ```python
+    import re
+    
+    def extract_hashtags(text):
+        """Extract hashtags from caption text"""
+        if text == "Sin texto":
+            return []
+        return re.findall(r'#\w+', text)
+    
+    df['hashtags'] = df['Texto del reel'].apply(extract_hashtags)
+    ```
+  </Tab>
+  
+  <Tab title="Convert to JSON">
+    ```python
+    import pandas as pd
+    import json
+    
+    df = pd.read_csv('informacion_reels_simple.csv')
+    
+    # Convert to records format
+    records = df.to_dict('records')
+    
+    # Save as JSON
+    with open('posts.json', 'w', encoding='utf-8') as f:
+        json.dump(records, f, ensure_ascii=False, indent=2)
+    ```
+  </Tab>
+  
+  <Tab title="Time Series Analysis">
+    ```python
+    import pandas as pd
+    
+    df = pd.read_csv('informacion_reels_simple.csv')
+    
+    # Convert to datetime
+    df['Fecha'] = pd.to_datetime(df['Fecha'])
+    
+    # Extract temporal features
+    df['year'] = df['Fecha'].dt.year
+    df['month'] = df['Fecha'].dt.month
+    df['day_of_week'] = df['Fecha'].dt.day_name()
+    df['hour'] = df['Fecha'].dt.hour
+    
+    # Group by month
+    monthly_posts = df.groupby(['year', 'month']).size()
+    ```
+  </Tab>
+</Tabs>
+
+## Schema Evolution
+
+As the project evolves, the schema may be extended with additional fields:
+
+<CardGroup cols={2}>
+  <Card title="Potential Future Fields" icon="plus">
+    - Geolocation data (if posts are tagged)
+    - Mentioned historical periods
+    - Topics/categories (manual or AI tagging)
+    - Sentiment analysis scores
+  </Card>
+  
+  <Card title="Backward Compatibility" icon="shield">
+    - New fields will be added as optional columns
+    - Existing fields will maintain their format
+    - Legacy CSV files will remain importable
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Scraping Guide" icon="code" href="/data/scraping">
+    Learn how to collect data using the scraper
+  </Card>
+  
+  <Card title="Data Sources" icon="database" href="/data/sources">
+    Understand where the data comes from
+  </Card>
+</CardGroup>

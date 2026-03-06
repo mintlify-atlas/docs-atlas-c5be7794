@@ -1,0 +1,206 @@
+---
+title: 'Instagram Scraping'
+description: 'Automated data collection using Instaloader for Historia Para Gandules content'
+---
+
+## Overview
+
+Historia Para Gandules uses **Instaloader**, a Python library, to automatically scrape video content from the `@historiaparagandules` Instagram account. The scraper collects metadata, engagement metrics, and video information for analysis and visualization.
+
+## Implementation
+
+The scraping implementation is straightforward and focuses on collecting video posts (reels) from the Instagram profile.
+
+### Core Script
+
+The main scraping script (`scraping5.py`) performs the following operations:
+
+```python scraping5.py
+import instaloader
+import csv
+
+# Create Instaloader instance
+L = instaloader.Instaloader()
+
+# Target Instagram profile
+profile_name = "historiaparagandules"
+profile = instaloader.Profile.from_username(L.context, profile_name)
+
+# Open CSV file for writing
+with open("informacion_reels_simple.csv", mode="w", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+    
+    # Write CSV headers
+    writer.writerow(["Fecha", "Texto del reel", "Likes", "Comentarios", "URL del video", 
+                     "Visualizaciones", "Duración del video (s)", "URL del Post"])
+    
+    # Iterate through posts and filter videos
+    for post in profile.get_posts():
+        if post.is_video:
+            fecha = post.date.strftime('%Y-%m-%d %H:%M:%S')
+            texto = post.caption or "Sin texto"
+            likes = post.likes or 0
+            comentarios = post.comments or 0
+            url_video = post.video_url or "Sin URL"
+            visualizaciones = post.video_view_count or "No disponible"
+            duracion_video = post.video_duration or "No disponible"
+            url_post = f"https://www.instagram.com/p/{post.shortcode}/"
+            
+            writer.writerow([fecha, texto, likes, comentarios, url_video, 
+                             visualizaciones, duracion_video, url_post])
+            print(f"Scrapeando post del {fecha}")
+
+print("Información guardada en 'informacion_reels_simple.csv'")
+```
+
+## How It Works
+
+<Steps>
+  <Step title="Initialize Instaloader">
+    Create an Instaloader instance to interact with Instagram's public API.
+    
+    ```python
+    L = instaloader.Instaloader()
+    ```
+  </Step>
+  
+  <Step title="Load Profile">
+    Fetch the target profile using the username.
+    
+    ```python
+    profile_name = "historiaparagandules"
+    profile = instaloader.Profile.from_username(L.context, profile_name)
+    ```
+  </Step>
+  
+  <Step title="Filter Video Posts">
+    Iterate through all posts and select only videos (reels).
+    
+    ```python
+    for post in profile.get_posts():
+        if post.is_video:
+            # Process video post
+    ```
+  </Step>
+  
+  <Step title="Extract Metadata">
+    For each video post, extract engagement metrics, timestamps, and URLs.
+    
+    ```python
+    fecha = post.date.strftime('%Y-%m-%d %H:%M:%S')
+    likes = post.likes or 0
+    visualizaciones = post.video_view_count or "No disponible"
+    ```
+  </Step>
+  
+  <Step title="Save to CSV">
+    Write all collected data to a CSV file for further processing.
+    
+    ```python
+    writer.writerow([fecha, texto, likes, comentarios, url_video, 
+                     visualizaciones, duracion_video, url_post])
+    ```
+  </Step>
+</Steps>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="No Authentication Required" icon="lock-open">
+    Scrapes publicly available Instagram content without login credentials.
+  </Card>
+  
+  <Card title="Video-Only Filtering" icon="video">
+    Automatically filters posts to collect only video content (reels).
+  </Card>
+  
+  <Card title="Comprehensive Metadata" icon="database">
+    Captures 8 different fields including engagement metrics and timestamps.
+  </Card>
+  
+  <Card title="CSV Export" icon="file-csv">
+    Outputs data in a structured CSV format for easy analysis.
+  </Card>
+</CardGroup>
+
+## Data Collection Fields
+
+The scraper collects the following fields for each video post:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Fecha | DateTime | Publication timestamp (YYYY-MM-DD HH:MM:SS) |
+| Texto del reel | String | Caption/description text |
+| Likes | Integer | Number of likes |
+| Comentarios | Integer | Number of comments |
+| URL del video | String | Direct video file URL |
+| Visualizaciones | Integer | Video view count |
+| Duración del video (s) | Float | Video duration in seconds |
+| URL del Post | String | Instagram post permalink |
+
+See the [Schema documentation](/data/schema) for detailed field specifications.
+
+## Installation
+
+To run the scraper, install Instaloader:
+
+<CodeGroup>
+```bash pip
+pip install instaloader
+```
+
+```bash conda
+conda install -c conda-forge instaloader
+```
+</CodeGroup>
+
+## Usage
+
+Run the scraping script:
+
+```bash
+python scraping5.py
+```
+
+The script will:
+1. Connect to the Historia Para Gandules Instagram profile
+2. Iterate through all posts
+3. Filter video content
+4. Extract metadata and metrics
+5. Save results to `informacion_reels_simple.csv`
+
+<Note>
+  The scraping process may take several minutes depending on the number of posts on the account.
+</Note>
+
+## Limitations
+
+<Warning>
+  Instagram may rate-limit requests. If you encounter errors, consider adding delays between requests or running the scraper less frequently.
+</Warning>
+
+- **Public data only**: Only publicly available information is collected
+- **No authentication**: The scraper does not log in to Instagram
+- **Rate limiting**: Instagram may throttle excessive requests
+- **Field availability**: Some fields (like view count) may not always be available depending on Instagram's API changes
+
+## Output Format
+
+The scraper generates a CSV file (`informacion_reels_simple.csv`) with UTF-8 encoding:
+
+```csv
+Fecha,Texto del reel,Likes,Comentarios,URL del video,Visualizaciones,Duración del video (s),URL del Post
+2024-01-15 14:30:00,"Historical content about...",1250,45,https://...,15000,45.5,https://www.instagram.com/p/ABC123/
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Data Sources" icon="database" href="/data/sources">
+    Learn about the Instagram account and content types
+  </Card>
+  
+  <Card title="Data Schema" icon="table" href="/data/schema">
+    Explore the complete data structure and field specifications
+  </Card>
+</CardGroup>

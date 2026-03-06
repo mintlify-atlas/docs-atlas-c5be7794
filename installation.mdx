@@ -1,0 +1,188 @@
+---
+title: Installation
+description: Set up your environment and install all required dependencies for Historia Para Gandules
+---
+
+## Prerequisites
+
+Before getting started with Historia Para Gandules, ensure you have the following installed on your system:
+
+- **Python 3.8+** - The platform is built with Python
+- **pip** - Python package manager
+- **Git** - For cloning the repository
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the Historia Para Gandules repository to your local machine:
+
+    ```bash
+    git clone https://github.com/yourusername/historia-para-gandules.git
+    cd historia-para-gandules
+    ```
+  </Step>
+
+  <Step title="Create a Virtual Environment (Recommended)">
+    It's recommended to use a virtual environment to isolate project dependencies:
+
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+  </Step>
+
+  <Step title="Install Core Dependencies">
+    Install the required Python packages:
+
+    ```bash
+    pip install instaloader pandas folium requests jupyter matplotlib seaborn openpyxl
+    ```
+  </Step>
+</Steps>
+
+## Required Dependencies
+
+### Data Scraping
+
+- **instaloader** - Instagram scraping library for downloading posts and metadata
+
+```bash
+pip install instaloader
+```
+
+### Data Processing
+
+- **pandas** - Data manipulation and analysis
+- **openpyxl** - Excel file reading and writing
+
+```bash
+pip install pandas openpyxl
+```
+
+### Visualization
+
+- **folium** - Interactive map generation
+- **matplotlib** - Static plotting and visualization
+- **seaborn** - Statistical data visualization
+- **plotly** - Interactive plotting (used in EDA)
+
+```bash
+pip install folium matplotlib seaborn plotly
+```
+
+### Analysis Environment
+
+- **jupyter** - Interactive notebook environment for exploratory data analysis
+
+```bash
+pip install jupyter notebook
+```
+
+### HTTP Requests
+
+- **requests** - HTTP library for downloading images
+
+```bash
+pip install requests
+```
+
+## Complete Installation Command
+
+You can install all dependencies at once with:
+
+```bash
+pip install instaloader pandas folium requests jupyter matplotlib seaborn openpyxl plotly
+```
+
+## Verify Installation
+
+Verify that all packages are installed correctly:
+
+```python
+import instaloader
+import pandas as pd
+import folium
+import requests
+import matplotlib
+import seaborn
+import openpyxl
+
+print("All packages installed successfully!")
+```
+
+<Note>
+  If you encounter any import errors, make sure your virtual environment is activated and all packages are installed in the correct environment.
+</Note>
+
+## Directory Structure
+
+After installation, your project structure should look like this:
+
+```
+historia-para-gandules/
+├── scraping5.py              # Instagram scraper script
+├── mapita5.py                # Map generation script
+├── EDA.ipynb                 # Exploratory data analysis notebook
+├── excel_info_1.xlsx         # Location data with coordinates
+├── imagenes/                 # Directory for downloaded images
+└── index.html               # Generated map output
+```
+
+## Platform-Specific Notes
+
+### Windows
+
+On Windows, you may need to install Visual C++ Build Tools if you encounter compilation errors:
+
+- Download from [Microsoft Visual Studio](https://visualstudio.microsoft.com/downloads/)
+- Select "Desktop development with C++" during installation
+
+### macOS
+
+Ensure Xcode Command Line Tools are installed:
+
+```bash
+xcode-select --install
+```
+
+### Linux
+
+Most dependencies should work out of the box. If you encounter issues, install development packages:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install python3-dev build-essential
+
+# Fedora
+sudo dnf install python3-devel gcc
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="ImportError: No module named 'instaloader'">
+    Make sure you've activated your virtual environment and installed all dependencies:
+    
+    ```bash
+    source venv/bin/activate
+    pip install instaloader
+    ```
+  </Accordion>
+
+  <Accordion title="Permission denied when creating directories">
+    Ensure you have write permissions in your project directory, or run with appropriate permissions.
+  </Accordion>
+
+  <Accordion title="SSL Certificate errors with requests">
+    Update your certificates or use:
+    
+    ```bash
+    pip install --upgrade certifi
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Once installation is complete, proceed to the [Quickstart Guide](/quickstart) to learn how to scrape Instagram data, generate maps, and perform analysis.

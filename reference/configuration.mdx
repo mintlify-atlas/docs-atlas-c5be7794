@@ -1,0 +1,197 @@
+---
+title: Configuration
+description: Configuration options for scraping and map generation
+---
+
+This page documents all configurable parameters in the Historia Para Gandules project.
+
+## Instagram Scraping Configuration
+
+### Profile Settings
+
+<ParamField path="profile_name" type="string" default="historiaparagandules">
+  The Instagram username to scrape content from.
+  
+  **Location:** `scraping5.py:8`
+  
+  **Example:**
+  ```python
+  profile_name = "historiaparagandules"
+  ```
+</ParamField>
+
+### Output Settings
+
+<ParamField path="output_file" type="string" default="informacion_reels_simple.csv">
+  CSV filename for scraped data output.
+  
+  **Location:** `scraping5.py:14`
+  
+  **Format:** UTF-8 encoded CSV with headers
+</ParamField>
+
+### CSV Headers
+
+The output CSV includes the following columns:
+
+1. `Fecha` - Post date
+2. `Texto del reel` - Caption text
+3. `Likes` - Like count
+4. `Comentarios` - Comment count
+5. `URL del video` - Video file URL
+6. `Visualizaciones` - View count
+7. `Duración del video (s)` - Duration in seconds
+8. `URL del Post` - Instagram post URL
+
+---
+
+## Map Generation Configuration
+
+### Input Data
+
+<ParamField path="input_file" type="string" default="excel_info_1.xlsx">
+  Excel file containing reel data with location information.
+  
+  **Location:** `mapita5.py:11`
+  
+  **Required columns:**
+  - `Localización` - Coordinates in "lat,lon" format
+  - `URL de imagen` - Image URL for thumbnails
+  - `Texto del reel` - Reel caption
+  - `URL del Post` - Instagram post link
+</ParamField>
+
+### Image Storage
+
+<ParamField path="image_directory" type="string" default="imagenes">
+  Directory for storing downloaded thumbnail images.
+  
+  **Location:** `mapita5.py:6-8`
+  
+  **Behavior:** Created automatically if it doesn't exist
+</ParamField>
+
+<ParamField path="image_filename_pattern" type="string" default="imagenes/imagen_{index}.jpg">
+  Naming pattern for downloaded images.
+  
+  **Variables:**
+  - `{index}` - Row index from the DataFrame
+</ParamField>
+
+### Map Display Settings
+
+<ParamField path="map_center" type="array" default="[28.0, -15.0]">
+  Initial center coordinates for the map [latitude, longitude].
+  
+  **Location:** `mapita5.py:40`
+  
+  **Default:** Centered on the Canary Islands
+  
+  **Format:** `[latitude, longitude]`
+  
+  **Example:**
+  ```python
+  # For Tenerife
+  map_center = [28.4636, -16.2518]
+  
+  # For Gran Canaria  
+  map_center = [28.1248, -15.4300]
+  ```
+</ParamField>
+
+<ParamField path="zoom_start" type="integer" default="6">
+  Initial zoom level for the map.
+  
+  **Location:** `mapita5.py:40`
+  
+  **Range:** 1-18
+  - `1-3`: World view
+  - `4-6`: Country/region view (default)
+  - `7-10`: City view
+  - `11-18`: Street/building view
+</ParamField>
+
+<ParamField path="popup_max_width" type="integer" default="300">
+  Maximum width in pixels for marker popup windows.
+  
+  **Location:** `mapita5.py:57`
+</ParamField>
+
+<ParamField path="thumbnail_width" type="integer" default="200">
+  Width in pixels for thumbnail images in popups.
+  
+  **Location:** `mapita5.py:51`
+  
+  **Note:** Height is set to `auto` to maintain aspect ratio
+</ParamField>
+
+### Output Settings
+
+<ParamField path="output_map" type="string" default="mapa_ubicaciones_reels_with_thumbnails.html">
+  Filename for the generated HTML map.
+  
+  **Location:** `mapita5.py:61`
+  
+  **Format:** Standalone HTML file with embedded JavaScript
+</ParamField>
+
+---
+
+## Data Analysis Configuration
+
+### Input Data
+
+<ParamField path="analysis_input" type="string" default="excel_info_1.xlsx">
+  Excel file for exploratory data analysis.
+  
+  **Location:** `EDA.ipynb`
+</ParamField>
+
+### Display Settings
+
+<ParamField path="max_colwidth" type="None">
+  Pandas display option for showing full column content.
+  
+  **Usage:**
+  ```python
+  pd.set_option('display.max_colwidth', None)
+  ```
+</ParamField>
+
+### Visualization Settings
+
+The analysis notebook uses:
+- **Matplotlib** for static plots
+- **Seaborn** for statistical visualizations
+- **Plotly** for interactive charts
+
+**Color schemes:**
+- Categories: Default Plotly color palette
+- Bubble sizes: Proportional to view counts
+
+---
+
+## Environment Requirements
+
+### Python Version
+
+**Recommended:** Python 3.8 or higher
+
+### Required Packages
+
+```txt
+instaloader
+pandas
+folium
+requests
+matplotlib
+seaborn
+plotly
+openpyxl
+```
+
+### Installation
+
+```bash
+pip install instaloader pandas folium requests matplotlib seaborn plotly openpyxl
+```

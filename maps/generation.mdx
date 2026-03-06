@@ -1,0 +1,255 @@
+---
+title: Map Generation Process
+description: Understanding how maps are generated using Folium and Python
+---
+
+## Overview
+
+The map generation process (`mapita5.py:40-62`) takes Excel data and creates an interactive HTML map with markers for each historical content location.
+
+## Step-by-Step Process
+
+### 1. Initialize Dependencies
+
+```python
+import folium
+import pandas as pd
+import requests
+import os
+```
+
+**Required libraries:**
+- `folium`: Creates Leaflet.js maps
+- `pandas`: Reads Excel files and processes data
+- `requests`: Downloads images from URLs
+- `os`: File system operations
+
+### 2. Setup Image Cache
+
+```python
+# Crear carpeta para almacenar las imágenes
+if not os.path.exists("imagenes"):
+    os.makedirs("imagenes")
+```
+
+The script creates a local `imagenes/` directory to cache downloaded thumbnails. This improves performance and ensures the map works offline.
+
+**Location**: `mapita5.py:6-8`
+
+### 3. Load Data Source
+
+```python
+# Cargar el archivo Excel
+df = pd.read_excel('excel_info_1.xlsx')
+```
+
+Loads the Excel file containing location data, image URLs, and post information into a Pandas DataFrame.
+
+**Location**: `mapita5.py:11`
+
+### 4. Parse Coordinates
+
+The coordinate parsing function handles the "lat,lon" format:
+
+```python
+def obtener_coordenadas(localizacion):
+    try:
+        lat, lon = map(float, localizacion.split(','))
+        return lat, lon
+    except Exception as e:
+        print(f"Error al procesar la ubicación: {localizacion} - {e}")
+        return None, None
+```
+
+**Location**: `mapita5.py:14-20`
+
+**Coordinate Format:**
+- Format: `"latitude,longitude"`
+- Example: `"28.1235,-15.4362"`
+- Decimal degrees (WGS84 coordinate system)
+- Negative values for West longitude and South latitude
+
+**Error Handling:**
+- Returns `(None, None)` for invalid coordinates
+- Prints error message to console
+- Skips invalid locations during map generation
+
+### 5. Download and Cache Images
+
+```python
+def descargar_imagen(url, index):
+    try:
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            ruta_imagen = f"imagenes/imagen_{index}.jpg"
+            with open(ruta_imagen, 'wb') as file:
+                for chunk in response.iter_content(1024):
+                    file.write(chunk)
+            return ruta_imagen
+        else:
+            print(f"No se pudo descargar la imagen: {url}")
+            return None
+    except Exception as e:
+        print(f"Error al descargar la imagen: {url} - {e}")
+        return None
+```
+
+**Location**: `mapita5.py:23-37`
+
+**Features:**
+- Streams images in 1KB chunks to handle large files
+- Saves with sequential naming: `imagen_0.jpg`, `imagen_1.jpg`, etc.
+- Returns local file path for use in HTML
+- Handles network errors gracefully
+
+### 6. Create Base Map
+
+```python
+# Crear el mapa
+m = folium.Map(location=[28.0, -15.0], zoom_start=6)
+```
+
+**Location**: `mapita5.py:40`
+
+**Configuration:**
+- `location=[28.0, -15.0]`: Center on Canary Islands
+- `zoom_start=6`: Show entire archipelago
+- Uses default OpenStreetMap tiles
+
+### 7. Add Markers with Popups
+
+```python
+# Iterar sobre el DataFrame
+for index, row in df.iterrows():
+    lat, lon = obtener_coordenadas(row['Localización'])
+    if lat is not None and lon is not None:
+        ruta_imagen = descargar_imagen(row['URL de imagen'], index)
+        if ruta_imagen:
+            popup_content = f"""
+            <div>
+                <h4>{row['Texto del reel'].split(' ')[0]}</h4>
+                <img src="{ruta_imagen}" alt="Imagen del Reel" style="width:200px;height:auto;">
+                <a href="{row['URL del Post']}">Ver publicación</a>
+            </div>
+            """
+            folium.Marker(
+                location=[lat, lon],
+                popup=folium.Popup(popup_content, max_width=300),
+            ).add_to(m)
+```
+
+**Location**: `mapita5.py:43-58`
+
+**Process:**
+1. Iterate through each row in the Excel data
+2. Parse coordinates from the `Localización` column
+3. Download and cache the thumbnail image
+4. Create HTML popup content with:
+   - Title (first word of reel text)
+   - Thumbnail image (200px width, auto height)
+   - Link to Instagram post
+5. Create Folium marker with popup (300px max width)
+6. Add marker to the map
+
+**Data Validation:**
+- Skips rows with invalid coordinates
+- Skips markers if image download fails
+- Ensures robust map generation even with incomplete data
+
+### 8. Save HTML Output
+
+```python
+# Guardar el mapa como archivo HTML
+m.save("mapa_ubicaciones_reels_with_thumbnails.html")
+print("Mapa generado con imágenes y enlaces: 'mapa_ubicaciones_reels_with_thumbnails.html'")
+```
+
+**Location**: `mapita5.py:61-62`
+
+Generates a self-contained HTML file with:
+- Embedded Leaflet.js library
+- Map configuration and markers
+- Relative paths to cached images
+- Interactive JavaScript controls
+
+## Generated Output
+
+### File Structure
+
+```
+.
+├── mapita5.py
+├── excel_info_1.xlsx
+├── imagenes/
+│   ├── imagen_0.jpg
+│   ├── imagen_1.jpg
+│   └── ...
+└── mapa_ubicaciones_reels_with_thumbnails.html
+```
+
+### HTML Map Features
+
+- **Interactive panning**: Drag to explore
+- **Zoom controls**: Mouse wheel or +/- buttons
+- **Marker clusters**: Automatic grouping at low zoom levels (if enabled)
+- **Clickable markers**: Open popups with content
+- **Responsive design**: Works on desktop and mobile
+
+## Performance Considerations
+
+### Image Caching
+
+Images are downloaded once and reused:
+- **First run**: Downloads all images (slower)
+- **Subsequent runs**: Uses cached images (faster)
+- **Storage**: ~100-500KB per image
+
+### Large Datasets
+
+For maps with many markers:
+- Consider marker clustering plugins
+- Optimize image sizes before upload
+- Use lazy loading for popups
+- Filter data by region or time period
+
+## Error Handling
+
+The script handles common issues:
+
+| Issue | Behavior |
+|-------|----------|
+| Invalid coordinates | Skip marker, print error |
+| Failed image download | Skip marker, print error |
+| Missing Excel columns | Raise exception |
+| Network timeout | Skip image, continue processing |
+
+## Running the Script
+
+### Basic Execution
+
+```bash
+python mapita5.py
+```
+
+### Prerequisites
+
+Install required packages:
+
+```bash
+pip install folium pandas requests openpyxl
+```
+
+### Expected Output
+
+```
+Mapa generado con imágenes y enlaces: 'mapa_ubicaciones_reels_with_thumbnails.html'
+```
+
+If errors occur, you'll see messages like:
+- `"Error al procesar la ubicación: ..."` - Invalid coordinate format
+- `"No se pudo descargar la imagen: ..."` - HTTP error (404, 403, etc.)
+- `"Error al descargar la imagen: ..."` - Network or file system error
+
+## Next Steps
+
+- [Customization Guide](/maps/customization) - Learn how to customize markers, popups, and map styling

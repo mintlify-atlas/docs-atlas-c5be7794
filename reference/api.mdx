@@ -1,0 +1,158 @@
+---
+title: API Reference
+description: Complete function reference for Historia Para Gandules scripts
+---
+
+This page documents the main functions and modules used in the Historia Para Gandules project.
+
+## scraping5.py
+
+The Instagram scraping script that collects reel data from the `historiaparagandules` profile.
+
+### Main Components
+
+<ParamField path="L" type="instaloader.Instaloader">
+  The main Instaloader instance used to authenticate and access Instagram data.
+</ParamField>
+
+<ParamField path="profile_name" type="string" default="historiaparagandules">
+  The Instagram profile username to scrape data from.
+</ParamField>
+
+### Data Collection
+
+The script iterates through all posts from the profile and filters video content (reels). For each video post, it extracts:
+
+<ParamField path="fecha" type="datetime">
+  Post date in `YYYY-MM-DD HH:MM:SS` format
+</ParamField>
+
+<ParamField path="texto" type="string">
+  Caption text of the reel (or "Sin texto" if none)
+</ParamField>
+
+<ParamField path="likes" type="integer">
+  Number of likes on the post
+</ParamField>
+
+<ParamField path="comentarios" type="integer">
+  Number of comments on the post
+</ParamField>
+
+<ParamField path="url_video" type="string">
+  Direct URL to the video file
+</ParamField>
+
+<ParamField path="visualizaciones" type="integer">
+  View count for the video
+</ParamField>
+
+<ParamField path="duracion_video" type="float">
+  Video duration in seconds
+</ParamField>
+
+<ParamField path="url_post" type="string">
+  Instagram post URL in format `https://www.instagram.com/p/{shortcode}/`
+</ParamField>
+
+### Output
+
+The script saves all collected data to `informacion_reels_simple.csv` with UTF-8 encoding.
+
+---
+
+## mapita5.py
+
+Generates an interactive map visualization of Instagram reel locations using Folium.
+
+### Functions
+
+#### obtener_coordenadas()
+
+```python
+def obtener_coordenadas(localizacion)
+```
+
+Parses coordinate strings and returns latitude/longitude values.
+
+<ParamField path="localizacion" type="string" required>
+  Coordinate string in format `"latitude,longitude"`
+</ParamField>
+
+**Returns:** Tuple of `(lat, lon)` as floats, or `(None, None)` if parsing fails.
+
+**Example:**
+```python
+lat, lon = obtener_coordenadas("28.1234,-15.5678")
+# Returns: (28.1234, -15.5678)
+```
+
+---
+
+#### descargar_imagen()
+
+```python
+def descargar_imagen(url, index)
+```
+
+Downloads an image from a URL and saves it locally.
+
+<ParamField path="url" type="string" required>
+  Direct URL to the image file
+</ParamField>
+
+<ParamField path="index" type="integer" required>
+  Unique identifier for the image filename
+</ParamField>
+
+**Returns:** String path to saved image (`imagenes/imagen_{index}.jpg`) or `None` if download fails.
+
+**Behavior:**
+- Creates `imagenes/` directory if it doesn't exist
+- Downloads images in chunks of 1024 bytes
+- Handles HTTP errors gracefully
+
+---
+
+### Map Configuration
+
+<ParamField path="location" type="array" default="[28.0, -15.0]">
+  Initial map center coordinates [latitude, longitude] - centered on Canary Islands
+</ParamField>
+
+<ParamField path="zoom_start" type="integer" default="6">
+  Initial zoom level for the map
+</ParamField>
+
+### Marker Popups
+
+Each marker displays:
+- First word of the reel caption as title
+- Thumbnail image (200px width, auto height)
+- Link to Instagram post
+
+### Output
+
+Saves interactive HTML map to `mapa_ubicaciones_reels_with_thumbnails.html`
+
+---
+
+## Data Analysis (EDA.ipynb)
+
+The exploratory data analysis notebook provides statistical insights.
+
+### Key Metrics
+
+- **Average Likes:** ~1,316 per post
+- **Average Comments:** ~39 per post  
+- **Average Views:** ~15,392 per post
+- **Average Duration:** ~50 seconds
+
+### Categories
+
+Content is categorized into:
+- Toponimia de Lugares (Place Names)
+- Curiosidades Históricas (Historical Curiosities)
+- Biografías de Personajes Históricos (Historical Biographies)
+- Arquitectura (Architecture)
+- Acontecimientos Históricos (Historical Events)

@@ -1,0 +1,263 @@
+---
+title: 'Statistical Analysis'
+description: 'Statistical analysis of engagement metrics, correlations, and performance patterns'
+---
+
+## Overview
+
+This page provides a detailed statistical analysis of the Historia Para Gandules dataset, examining correlations between metrics, distribution patterns, and statistical significance of findings.
+
+## Descriptive Statistics
+
+### Summary Statistics for 121 Videos
+
+```python
+import pandas as pd
+
+# Load data
+df = pd.read_excel('excel26deenero.xlsx')
+
+# Calculate descriptive statistics
+descriptive_stats = df[[
+    'Likes', 
+    'Comentarios', 
+    'Visualizaciones', 
+    'Duración del video (s)'
+]].describe()
+
+print("Estadísticas Descriptivas:")
+print(descriptive_stats)
+```
+
+### Results
+
+| Statistic | Likes | Comments | Views | Duration (s) |
+|-----------|-------|----------|-------|-------------|
+| **Count** | 121 | 121 | 121 | 121 |
+| **Mean** | 1,316.37 | 39.01 | 15,391.88 | 50.08 |
+| **Std Dev** | 1,930.32 | 48.72 | 39,250.14 | 18.22 |
+| **Min** | 304 | 3 | 2,277 | 26 |
+| **25%** | 640 | 18 | 4,926 | 38.13 |
+| **50% (Median)** | 828 | 27 | 6,294 | 45.90 |
+| **75%** | 1,250 | 39 | 10,244 | 56.20 |
+| **Max** | 14,659 | 361 | 337,001 | 133.49 |
+
+<Note>
+The high standard deviation relative to mean values indicates significant variability in engagement, with some videos achieving viral status while others maintain steady baseline performance.
+</Note>
+
+## Correlation Analysis
+
+### Computing Correlations
+
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Select numeric columns
+numeric_cols = ['Likes', 'Comentarios', 'Visualizaciones', 'Duración del video (s)']
+
+# Calculate correlation matrix
+correlation_matrix = df[numeric_cols].corr()
+
+print(correlation_matrix)
+```
+
+### Correlation Heatmap
+
+```python
+# Create heatmap visualization
+fig, ax = plt.subplots(figsize=(10, 8))
+
+sns.heatmap(
+    df[numeric_cols].corr(), 
+    annot=True, 
+    cmap='coolwarm', 
+    center=0,
+    square=True,
+    linewidths=1,
+    cbar_kws={"shrink": 0.8},
+    ax=ax
+)
+
+ax.set_title('Mapa de Calor de Correlaciones', fontsize=16, pad=20)
+plt.tight_layout()
+plt.show()
+```
+
+### Interpretation of Correlations
+
+<AccordionGroup>
+  <Accordion title="Likes vs Comments">
+    **Strong positive correlation** - Videos with more likes tend to receive more comments, indicating consistent engagement across metrics.
+  </Accordion>
+  
+  <Accordion title="Likes vs Views">
+    **Positive correlation** - Higher view counts generally lead to more likes, though the relationship shows some variance indicating quality matters.
+  </Accordion>
+  
+  <Accordion title="Comments vs Views">
+    **Moderate positive correlation** - Comments increase with views but at a lower rate than likes, suggesting comments require deeper engagement.
+  </Accordion>
+  
+  <Accordion title="Duration vs Engagement">
+    **Weak correlation** - Video duration shows minimal correlation with engagement metrics, indicating content quality trumps length.
+  </Accordion>
+</AccordionGroup>
+
+## Engagement Metrics Distribution
+
+### Likes Distribution
+
+```python
+import numpy as np
+
+# Analyze likes distribution
+print(f"Mean Likes: {df['Likes'].mean():.2f}")
+print(f"Median Likes: {df['Likes'].median():.2f}")
+print(f"Mode: Median < Mean indicates right-skewed distribution")
+
+# Visualize distribution
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.hist(df['Likes'], bins=30, edgecolor='black', alpha=0.7)
+ax.axvline(df['Likes'].mean(), color='red', linestyle='--', label='Mean')
+ax.axvline(df['Likes'].median(), color='green', linestyle='--', label='Median')
+ax.set_xlabel('Likes')
+ax.set_ylabel('Frequency')
+ax.set_title('Distribution of Likes across Videos')
+ax.legend()
+plt.show()
+```
+
+**Key Finding**: The distribution is **right-skewed**, meaning most videos cluster around the median (828 likes) with a few high-performing outliers pulling the mean higher (1,316 likes).
+
+### Comments Distribution
+
+```python
+# Analyze comments distribution
+print(f"Mean Comments: {df['Comentarios'].mean():.2f}")
+print(f"Median Comments: {df['Comentarios'].median():.2f}")
+print(f"Comments per Like Ratio: {df['Comentarios'].sum() / df['Likes'].sum():.4f}")
+```
+
+**Insights**:
+- Average of **39 comments** per video
+- Median of **27 comments** (also right-skewed)
+- Comment-to-like ratio: approximately **0.03** (3 comments per 100 likes)
+
+### Views Distribution
+
+```python
+# Views analysis
+print(f"Mean Views: {df['Visualizaciones'].mean():.2f}")
+print(f"Median Views: {df['Visualizaciones'].median():.2f}")
+print(f"View-to-Like Conversion: {(df['Likes'].sum() / df['Visualizaciones'].sum()) * 100:.2f}%")
+```
+
+**Metrics**:
+- Mean views: **15,392**
+- Median views: **6,294** (significant skew)
+- **View-to-like conversion rate**: ~8.4%
+
+## Statistical Insights by Category
+
+### Category-Level Statistics
+
+```python
+# Group by category and calculate statistics
+category_stats = df.groupby('Categoria').agg({
+    'Likes': ['count', 'mean', 'sum'],
+    'Comentarios': ['mean', 'sum'],
+    'Visualizaciones': ['mean', 'sum']
+}).round(2)
+
+print(category_stats)
+```
+
+### Performance Variability
+
+```python
+# Calculate coefficient of variation by category
+cv_by_category = df.groupby('Categoria').agg({
+    'Likes': lambda x: (x.std() / x.mean()) * 100,
+    'Comentarios': lambda x: (x.std() / x.mean()) * 100
+}).round(2)
+
+print("Coefficient of Variation (%)")
+print(cv_by_category)
+```
+
+<Info>
+**Coefficient of Variation** measures relative variability. Higher values indicate less predictable performance within a category.
+</Info>
+
+## Duration Analysis
+
+### Video Length Statistics
+
+```python
+# Analyze video duration
+print(f"Average Duration: {df['Duración del video (s)'].mean():.2f} seconds")
+print(f"Median Duration: {df['Duración del video (s)'].median():.2f} seconds")
+print(f"Range: {df['Duración del video (s)'].min():.0f}s - {df['Duración del video (s)'].max():.0f}s")
+```
+
+**Results**:
+- Average: **50.08 seconds**
+- Median: **45.90 seconds**
+- Range: **26 to 133.49 seconds**
+
+### Duration vs Engagement
+
+```python
+# Correlation between duration and engagement
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
+
+# Duration vs Likes
+ax1.scatter(df['Duración del video (s)'], df['Likes'], alpha=0.6)
+ax1.set_xlabel('Duration (seconds)')
+ax1.set_ylabel('Likes')
+ax1.set_title('Duration vs Likes')
+
+# Duration vs Views
+ax2.scatter(df['Duración del video (s)'], df['Visualizaciones'], alpha=0.6, color='orange')
+ax2.set_xlabel('Duration (seconds)')
+ax2.set_ylabel('Views')
+ax2.set_title('Duration vs Views')
+
+plt.tight_layout()
+plt.show()
+```
+
+<Tip>
+Duration shows **weak correlation** with engagement, suggesting that content quality and topic relevance are more important than video length for this educational content.
+</Tip>
+
+## Key Statistical Findings
+
+<CardGroup cols={2}>
+  <Card title="High Variability" icon="chart-line">
+    Standard deviations exceed means for all metrics, indicating diverse performance across content
+  </Card>
+  
+  <Card title="Strong Engagement" icon="comments">
+    Likes and comments show strong positive correlation (visible in heatmap)
+  </Card>
+  
+  <Card title="Viral Potential" icon="fire">
+    Top performers exceed mean by 10x, demonstrating viral content potential
+  </Card>
+  
+  <Card title="Consistent Duration" icon="clock">
+    ~45-50 second sweet spot for short-form historical content
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+- [Category Analysis](/analysis/categories) - Performance breakdown by content type
+- [EDA Overview](/analysis/eda) - Return to exploratory analysis
+
+## References
+
+All statistical analyses are reproducible using the code provided in the project's `EDA.ipynb` notebook.
